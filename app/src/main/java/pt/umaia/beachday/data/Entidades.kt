@@ -59,3 +59,15 @@ data class CacheMar(
     val temperaturaMaximaAgua: Double,
     val atualizadoEm: Long
 )
+
+@Entity(tableName = "PerfilUtilizador")
+data class PerfilUtilizador(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val nome: String,
+    val temperaturaMinima: Double = 25.0,
+    val chuvaMaxima: Double = 15.0,
+    val ventoMaximo: Int = 2,
+    val marMinimo: Double? = null,
+    val marMaximo: Double = 1.5,
+    val aguaMinima: Double = 20.0
+)

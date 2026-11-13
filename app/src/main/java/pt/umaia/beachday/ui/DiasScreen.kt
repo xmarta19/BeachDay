@@ -14,6 +14,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import pt.umaia.beachday.data.NOME_PERFIL_PREDEFINIDO
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -36,7 +37,7 @@ fun DiasScreen(
             style = MaterialTheme.typography.headlineSmall
         )
         Text(
-            text = "Perfil: ${perfil.nome}",
+            text = "Perfil: ${perfil?.nome ?: NOME_PERFIL_PREDEFINIDO}",
             style = MaterialTheme.typography.bodyMedium
         )
 

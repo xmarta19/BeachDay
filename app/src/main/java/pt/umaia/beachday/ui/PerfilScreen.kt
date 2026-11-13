@@ -9,19 +9,27 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import pt.umaia.beachday.data.Perfil
-import pt.umaia.beachday.data.Regras
+import pt.umaia.beachday.data.NOME_PERFIL_PREDEFINIDO
+import pt.umaia.beachday.data.PerfilUtilizador
 import pt.umaia.beachday.data.descricaoVento
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -31,8 +39,25 @@ fun PerfilScreen(
     viewModel: PraiasViewModel,
     modifier: Modifier = Modifier
 ) {
-    val perfil by viewModel.perfil.collectAsState()
-    val regras by viewModel.regras.collectAsState()
+    val perfis by viewModel.perfis.collectAsState()
+    val idPerfil by viewModel.idPerfil.collectAsState()
+
+    var aEditar by remember { mutableStateOf<PerfilUtilizador?>(null) }
+    var aApagar by remember { mutableStateOf<PerfilUtilizador?>(null) }
+
+    val editado = aEditar
+    if (editado != null) {
+        EditorPerfil(
+            inicial = editado,
+            onGuardar = {
+                viewModel.guardarPerfil(it)
+                aEditar = null
+            },
+            onCancelar = { aEditar = null },
+            modifier = modifier
+        )
+        return
+    }
 
     Column(
         modifier = modifier
@@ -46,97 +71,229 @@ fun PerfilScreen(
             style = MaterialTheme.typography.headlineSmall
         )
         Text(
-            text = "O perfil muda a forma como a nota é calculada.",
+            text = "O perfil escolhido muda a forma como a nota é calculada.",
             style = MaterialTheme.typography.bodyMedium
         )
 
-        Perfil.entries.forEach { opcao ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { viewModel.escolherPerfil(opcao) }
-                    .padding(vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                RadioButton(
-                    selected = perfil == opcao,
-                    onClick = { viewModel.escolherPerfil(opcao) }
-                )
-                Column {
-                    Text(opcao.nome, style = MaterialTheme.typography.titleMedium)
-                    Text(opcao.descricao, style = MaterialTheme.typography.bodySmall)
-                }
-            }
+        LinhaPerfil(
+            nome = NOME_PERFIL_PREDEFINIDO,
+            descricao = "Perfil predefinido: um dia normal de praia, com sol, areal e banho.",
+            escolhido = idPerfil == 0 || perfis.none { it.id == idPerfil },
+            onEscolher = { viewModel.escolherPerfil(0) }
+        )
+
+        perfis.forEach { perfil ->
+            LinhaPerfil(
+                nome = perfil.nome,
+                descricao = resumo(perfil),
+                escolhido = perfil.id == idPerfil,
+                onEscolher = { viewModel.escolherPerfil(perfil.id) },
+                onEditar = { aEditar = perfil },
+                onApagar = { aApagar = perfil }
+            )
         }
 
-        if (perfil == Perfil.PERSONALIZADO) {
-            RegrasPersonalizadas(
-                regras = regras,
-                onAlterar = { viewModel.alterarRegras(it) }
-            )
+        Button(
+            onClick = { aEditar = PerfilUtilizador(nome = "") },
+            modifier = Modifier.padding(top = 8.dp)
+        ) {
+            Text("+ Criar perfil")
+        }
+    }
+
+    val paraApagar = aApagar
+    if (paraApagar != null) {
+        AlertDialog(
+            onDismissRequest = { aApagar = null },
+            title = { Text("Apagar perfil") },
+            text = { Text("Queres apagar o perfil \"${paraApagar.nome}\"?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.apagarPerfil(paraApagar)
+                        aApagar = null
+                    }
+                ) {
+                    Text("Apagar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { aApagar = null }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun LinhaPerfil(
+    nome: String,
+    descricao: String,
+    escolhido: Boolean,
+    onEscolher: () -> Unit,
+    onEditar: (() -> Unit)? = null,
+    onApagar: (() -> Unit)? = null
+) {
+    Column(Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onEscolher() }
+                .padding(vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            RadioButton(selected = escolhido, onClick = onEscolher)
+            Column(Modifier.weight(1f)) {
+                Text(nome, style = MaterialTheme.typography.titleMedium)
+                Text(descricao, style = MaterialTheme.typography.bodySmall)
+            }
+        }
+        if (onEditar != null && onApagar != null) {
+            Row(Modifier.padding(start = 40.dp)) {
+                TextButton(onClick = onEditar) { Text("Editar") }
+                TextButton(onClick = onApagar) { Text("Apagar") }
+            }
         }
     }
 }
 
 @Composable
-private fun RegrasPersonalizadas(
-    regras: Regras,
-    onAlterar: (Regras) -> Unit
+private fun EditorPerfil(
+    inicial: PerfilUtilizador,
+    onGuardar: (PerfilUtilizador) -> Unit,
+    onCancelar: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Text(
-        text = "Os teus limites",
-        style = MaterialTheme.typography.titleLarge,
-        modifier = Modifier.padding(top = 16.dp)
-    )
-    Text(
-        text = "Fora destes limites, a praia perde pontos.",
-        style = MaterialTheme.typography.bodySmall
-    )
+    var perfil by remember { mutableStateOf(inicial) }
 
-    Text("Temperatura mínima do ar: ${regras.temperaturaMinima.roundToInt()} °C")
-    Slider(
-        value = regras.temperaturaMinima.toFloat(),
-        onValueChange = { onAlterar(regras.copy(temperaturaMinima = it.roundToInt().toDouble())) },
-        valueRange = 15f..32f,
-        steps = 16
-    )
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = if (inicial.id == 0) "Novo perfil" else "Editar perfil",
+            style = MaterialTheme.typography.headlineSmall
+        )
 
-    Text("Probabilidade máxima de chuva: ${regras.chuvaMaxima.roundToInt()}%")
-    Slider(
-        value = regras.chuvaMaxima.toFloat(),
-        onValueChange = { onAlterar(regras.copy(chuvaMaxima = (it / 5).roundToInt() * 5.0)) },
-        valueRange = 0f..100f,
-        steps = 19
-    )
+        OutlinedTextField(
+            value = perfil.nome,
+            onValueChange = { perfil = perfil.copy(nome = it) },
+            label = { Text("Nome do perfil, por exemplo Surf") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
 
-    Text("Vento máximo: ${descricaoVento(regras.ventoMaximo)}")
-    Slider(
-        value = regras.ventoMaximo.toFloat(),
-        onValueChange = { onAlterar(regras.copy(ventoMaximo = it.roundToInt())) },
-        valueRange = 1f..4f,
-        steps = 2
-    )
+        Text(
+            text = "Fora destes limites, a praia perde pontos.",
+            style = MaterialTheme.typography.bodySmall
+        )
 
-    Text("Altura máxima do mar: ${formatar(regras.marMaximo)} m")
-    Slider(
-        value = regras.marMaximo.toFloat(),
-        onValueChange = { onAlterar(regras.copy(marMaximo = (it * 2).roundToInt() / 2.0)) },
-        valueRange = 0.5f..4f,
-        steps = 6
-    )
+        Text("Temperatura mínima do ar: ${perfil.temperaturaMinima.roundToInt()} °C")
+        Slider(
+            value = perfil.temperaturaMinima.toFloat(),
+            onValueChange = { perfil = perfil.copy(temperaturaMinima = it.roundToInt().toDouble()) },
+            valueRange = 15f..32f,
+            steps = 16
+        )
 
-    Text("Temperatura mínima da água: ${regras.aguaMinima.roundToInt()} °C")
-    Slider(
-        value = regras.aguaMinima.toFloat(),
-        onValueChange = { onAlterar(regras.copy(aguaMinima = it.roundToInt().toDouble())) },
-        valueRange = 10f..24f,
-        steps = 13
-    )
+        Text("Probabilidade máxima de chuva: ${perfil.chuvaMaxima.roundToInt()}%")
+        Slider(
+            value = perfil.chuvaMaxima.toFloat(),
+            onValueChange = { perfil = perfil.copy(chuvaMaxima = (it / 5).roundToInt() * 5.0) },
+            valueRange = 0f..100f,
+            steps = 19
+        )
 
-    OutlinedButton(onClick = { onAlterar(Regras()) }) {
-        Text("Repor valores iniciais")
+        Text("Vento máximo: ${descricaoVento(perfil.ventoMaximo)}")
+        Slider(
+            value = perfil.ventoMaximo.toFloat(),
+            onValueChange = { perfil = perfil.copy(ventoMaximo = it.roundToInt()) },
+            valueRange = 1f..4f,
+            steps = 2
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text("Quero ondas")
+                Text(
+                    text = "Define uma altura mínima do mar. Exclui as praias fluviais.",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+            Switch(
+                checked = perfil.marMinimo != null,
+                onCheckedChange = { ligado ->
+                    perfil = perfil.copy(marMinimo = if (ligado) 1.0 else null)
+                }
+            )
+        }
+
+        perfil.marMinimo?.let { minimo ->
+            Text("Altura mínima do mar: ${decimal(minimo)} m")
+            Slider(
+                value = minimo.toFloat(),
+                onValueChange = {
+                    val valor = (it * 2).roundToInt() / 2.0
+                    perfil = perfil.copy(
+                        marMinimo = valor,
+                        marMaximo = maxOf(perfil.marMaximo, valor)
+                    )
+                },
+                valueRange = 0.5f..3f,
+                steps = 4
+            )
+        }
+
+        Text("Altura máxima do mar: ${decimal(perfil.marMaximo)} m")
+        Slider(
+            value = perfil.marMaximo.toFloat(),
+            onValueChange = {
+                val valor = (it * 2).roundToInt() / 2.0
+                perfil = perfil.copy(
+                    marMaximo = valor,
+                    marMinimo = perfil.marMinimo?.let { minimo -> minOf(minimo, valor) }
+                )
+            },
+            valueRange = 0.5f..5f,
+            steps = 8
+        )
+
+        Text("Temperatura mínima da água: ${perfil.aguaMinima.roundToInt()} °C")
+        Slider(
+            value = perfil.aguaMinima.toFloat(),
+            onValueChange = { perfil = perfil.copy(aguaMinima = it.roundToInt().toDouble()) },
+            valueRange = 10f..24f,
+            steps = 13
+        )
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(
+                onClick = { onGuardar(perfil.copy(nome = perfil.nome.trim())) },
+                enabled = perfil.nome.isNotBlank()
+            ) {
+                Text("Guardar")
+            }
+            OutlinedButton(onClick = onCancelar) {
+                Text("Cancelar")
+            }
+        }
     }
 }
 
-private fun formatar(valor: Double): String =
+private fun resumo(perfil: PerfilUtilizador): String {
+    val ondas = perfil.marMinimo?.let { "mar ${decimal(it)} a ${decimal(perfil.marMaximo)} m" }
+        ?: "mar até ${decimal(perfil.marMaximo)} m"
+    return "Mín. ${perfil.temperaturaMinima.roundToInt()} °C · chuva até " +
+        "${perfil.chuvaMaxima.roundToInt()}% · vento até " +
+        "${descricaoVento(perfil.ventoMaximo).lowercase()} · $ondas"
+}
+
+private fun decimal(valor: Double): String =
     String.format(Locale.forLanguageTag("pt-PT"), "%.1f", valor)
