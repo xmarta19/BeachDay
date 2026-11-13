@@ -3,6 +3,7 @@ package pt.umaia.beachday.ui
 import android.app.Application
 import android.content.Context
 import android.util.Log
+import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.JsonParseException
@@ -20,6 +21,7 @@ import pt.umaia.beachday.data.IpmaApi
 import pt.umaia.beachday.data.PerfilUtilizador
 import pt.umaia.beachday.data.Praia
 import pt.umaia.beachday.data.PraiaRepository
+import pt.umaia.beachday.data.Sincronizacao
 import pt.umaia.beachday.data.estadoRede
 import pt.umaia.beachday.data.marcarAvisos
 import retrofit2.HttpException
@@ -27,6 +29,7 @@ import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import kotlin.time.Duration.Companion.seconds
 
 private data class Pedido(
     val pesquisa: String,
@@ -44,6 +47,7 @@ class PraiasViewModel(application: Application) : AndroidViewModel(application) 
     )
 
     private val perfilDao = AppDatabase.obter(application).perfilDao()
+    private val sincronizacao = Sincronizacao(application)
 
     private val preferencias =
         application.getSharedPreferences("beachday", Context.MODE_PRIVATE)
@@ -127,13 +131,14 @@ class PraiasViewModel(application: Application) : AndroidViewModel(application) 
 
     fun escolherPerfil(id: Int) {
         idPerfil.value = id
-        preferencias.edit().putInt("idPerfil", id).apply()
+        preferencias.edit { putInt("idPerfil", id) }
     }
 
     fun guardarPerfil(novo: PerfilUtilizador) {
         viewModelScope.launch {
             val id = perfilDao.guardar(novo).toInt()
             escolherPerfil(id)
+            enviarParaNuvem()
         }
     }
 
@@ -141,6 +146,7 @@ class PraiasViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             perfilDao.apagar(antigo)
             if (idPerfil.value == antigo.id) escolherPerfil(0)
+            enviarParaNuvem()
         }
     }
 
@@ -180,7 +186,7 @@ class PraiasViewModel(application: Application) : AndroidViewModel(application) 
 
         if (forcar && correuBem) {
             botaoBloqueado.value = true
-            delay(30_000)
+            delay(30.seconds)
             botaoBloqueado.value = false
         }
     }
@@ -203,17 +209,32 @@ class PraiasViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun definirFavorita(id: Int, favorita: Boolean) {
-        viewModelScope.launch { repository.definirFavorita(id, favorita) }
+        viewModelScope.launch {
+            repository.definirFavorita(id, favorita)
+            enviarParaNuvem()
+        }
     }
 
     fun registarVisita(idPraia: Int, nota: Int, comentario: String) {
         viewModelScope.launch {
             repository.registarVisita(idPraia, nota, comentario.trim().ifBlank { null })
+            enviarParaNuvem()
         }
     }
 
     fun apagarVisita(id: Int) {
-        viewModelScope.launch { repository.apagarVisita(id) }
+        viewModelScope.launch {
+            repository.apagarVisita(id)
+            enviarParaNuvem()
+        }
+    }
+
+    private suspend fun enviarParaNuvem() {
+        try {
+            sincronizacao.enviar(esperar = false)
+        } catch (e: IllegalStateException) {
+            Log.e("BeachDay", "Não foi possível enviar para a nuvem", e)
+        }
     }
 
     fun praia(id: Int) = repository.obter(id)

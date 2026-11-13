@@ -12,6 +12,9 @@ interface PerfilDao {
     @Query("SELECT * FROM PerfilUtilizador ORDER BY nome")
     fun todos(): Flow<List<PerfilUtilizador>>
 
+    @Query("SELECT * FROM PerfilUtilizador")
+    suspend fun lista(): List<PerfilUtilizador>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun guardar(perfil: PerfilUtilizador): Long
 

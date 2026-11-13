@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "871033498232",
+    "project_id": "beachday-229ef",
+    "storage_bucket": "beachday-229ef.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:871033498232:android:e91e9b4d5dbc04c10edb8d",
+        "android_client_info": {
+          "package_name": "pt.umaia.beachday"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB5VHQACgeZQwrHqRTTRZoikysM8y31wAw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

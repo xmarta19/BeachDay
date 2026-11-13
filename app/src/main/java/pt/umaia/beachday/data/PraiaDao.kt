@@ -81,6 +81,12 @@ interface PraiaDao {
     @Insert
     suspend fun inserirVisita(visita: Visita)
 
+    @Query("SELECT id FROM Praia WHERE favorita = 1")
+    suspend fun idsFavoritas(): List<Int>
+
+    @Query("SELECT * FROM Visita")
+    suspend fun todasVisitas(): List<Visita>
+
     @Query("DELETE FROM Visita WHERE id = :id")
     suspend fun apagarVisita(id: Int)
 

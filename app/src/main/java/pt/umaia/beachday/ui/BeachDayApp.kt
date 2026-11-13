@@ -64,6 +64,12 @@ fun BeachDayApp() {
                     icon = { Text("⚙") },
                     label = { Text("Perfil") }
                 )
+                NavigationBarItem(
+                    selected = rotaAtual == "conta",
+                    onClick = { abrirSeparador("conta") },
+                    icon = { Text("☺") },
+                    label = { Text("Conta") }
+                )
             }
         }
     ) { innerPadding ->
@@ -100,6 +106,10 @@ fun BeachDayApp() {
 
             composable("perfil") {
                 PerfilScreen(viewModel = praiasViewModel)
+            }
+
+            composable("conta") {
+                ContaScreen()
             }
 
             composable(
