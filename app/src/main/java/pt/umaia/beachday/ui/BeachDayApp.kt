@@ -25,9 +25,15 @@ fun BeachDayApp() {
 
     fun abrirSeparador(destino: String) {
         navController.navigate(destino) {
-            popUpTo("praias") { saveState = true }
+            popUpTo("dias") { saveState = true }
             launchSingleTop = true
             restoreState = true
+        }
+    }
+
+    fun voltar() {
+        if (navController.previousBackStackEntry != null) {
+            navController.popBackStack()
         }
     }
 
@@ -35,10 +41,10 @@ fun BeachDayApp() {
         bottomBar = {
             NavigationBar {
                 NavigationBarItem(
-                    selected = rotaAtual == "praias",
-                    onClick = { abrirSeparador("praias") },
+                    selected = rotaAtual == "dias" || rotaAtual == "praias",
+                    onClick = { abrirSeparador("dias") },
                     icon = { Text("☀") },
-                    label = { Text("Hoje") }
+                    label = { Text("Praias") }
                 )
                 NavigationBarItem(
                     selected = rotaAtual == "favoritas",
@@ -52,17 +58,31 @@ fun BeachDayApp() {
                     icon = { Text("≡") },
                     label = { Text("Histórico") }
                 )
+                NavigationBarItem(
+                    selected = rotaAtual == "perfil",
+                    onClick = { abrirSeparador("perfil") },
+                    icon = { Text("⚙") },
+                    label = { Text("Perfil") }
+                )
             }
         }
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = "praias",
+            startDestination = "dias",
             modifier = Modifier.padding(innerPadding)
         ) {
+            composable("dias") {
+                DiasScreen(
+                    onEscolherDia = { navController.navigate("praias") },
+                    viewModel = praiasViewModel
+                )
+            }
+
             composable("praias") {
                 ListaPraiasScreen(
                     onAbrirPraia = { id -> navController.navigate("praia/$id") },
+                    onMudarDia = { voltar() },
                     viewModel = praiasViewModel
                 )
             }
@@ -76,6 +96,10 @@ fun BeachDayApp() {
 
             composable("historico") {
                 HistoricoScreen(viewModel = praiasViewModel)
+            }
+
+            composable("perfil") {
+                PerfilScreen(viewModel = praiasViewModel)
             }
 
             composable(

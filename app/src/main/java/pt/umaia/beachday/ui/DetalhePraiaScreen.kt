@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
@@ -26,10 +27,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import pt.umaia.beachday.data.AvisoIpma
 import pt.umaia.beachday.data.DiaPrevisao
+import pt.umaia.beachday.data.Perfil
 import pt.umaia.beachday.data.Praia
+import pt.umaia.beachday.data.avisoAtivoEm
 import pt.umaia.beachday.data.descricaoVento
 
 @Composable
@@ -42,6 +46,7 @@ fun DetalhePraiaScreen(
     val praia by remember(idPraia) { viewModel.praia(idPraia) }
         .collectAsState(initial = null)
     val avisos by viewModel.avisos.collectAsState()
+    val dia by viewModel.dia.collectAsState()
 
     Column(
         modifier = modifier
@@ -63,14 +68,42 @@ fun DetalhePraiaScreen(
             Text("Local IPMA: ${atual.nomeLocalTempo ?: "A associar..."}")
             Text("Zona do mar: ${atual.nomeLocalMar ?: "Não aplicável"}")
             avisos
-                .filter { it.idAreaAviso == atual.idAreaAviso }
+                .filter { it.idAreaAviso == atual.idAreaAviso && avisoAtivoEm(it, dia) }
                 .forEach { aviso -> CartaoAviso(aviso) }
+            BotoesMapa(atual)
             AcoesPraia(atual, viewModel)
             PrevisaoPraia(atual, viewModel)
             Text(
                 text = "Fonte: IPMA. Dados regionais, não medidos nesta praia.",
                 style = MaterialTheme.typography.bodySmall
             )
+        }
+    }
+}
+
+@Composable
+private fun BotoesMapa(praia: Praia) {
+    val abrirLink = LocalUriHandler.current
+    val coordenadas = "${praia.latitude},${praia.longitude}"
+
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Button(
+            onClick = {
+                abrirLink.openUri(
+                    "https://www.google.com/maps/dir/?api=1&destination=$coordenadas"
+                )
+            }
+        ) {
+            Text("Como chegar")
+        }
+        OutlinedButton(
+            onClick = {
+                abrirLink.openUri(
+                    "https://www.google.com/maps/search/?api=1&query=$coordenadas"
+                )
+            }
+        ) {
+            Text("Ver no mapa")
         }
     }
 }
@@ -180,23 +213,41 @@ private fun DialogoVisita(
 
 @Composable
 private fun PrevisaoPraia(praia: Praia, viewModel: PraiasViewModel) {
-    val dias by remember(praia.idLocalTempo, praia.idLocalMar) {
-        viewModel.previsao(praia)
+    val perfil by viewModel.perfil.collectAsState()
+    val regras by viewModel.regras.collectAsState()
+
+    val dias by remember(praia, perfil, regras) {
+        viewModel.previsao(praia, perfil, regras)
     }.collectAsState(initial = emptyList())
 
     LaunchedEffect(praia.idLocalTempo, praia.idLocalMar) {
         viewModel.atualizarPrevisao(praia)
     }
 
+    Text(
+        text = "Notas para o perfil ${perfil.nome}",
+        style = MaterialTheme.typography.titleMedium
+    )
+
+    if (perfil == Perfil.SURF && praia.tipo == "fluvial") {
+        Text("O perfil Surf e bodyboard não se aplica a praias fluviais.")
+    } else if (praia.tipo == "fluvial") {
+        Text(
+            text = "Sem dados do mar: a nota usa só o tempo.",
+            style = MaterialTheme.typography.bodySmall
+        )
+    }
+
     if (dias.isEmpty()) {
         Text("A carregar a previsão...")
     } else {
-        val melhorNota = dias.maxOf { it.nota }
-        val haEmpate = dias.count { it.nota == melhorNota } > 1
+        val notas = dias.mapNotNull { it.nota }
+        val melhorNota = notas.maxOrNull()
+        val haEmpate = melhorNota != null && notas.count { it == melhorNota } > 1
 
         dias.forEach { dia ->
             val etiqueta = when {
-                dia.nota != melhorNota -> null
+                melhorNota == null || dia.nota != melhorNota -> null
                 haEmpate -> "Empatado"
                 else -> "Melhor dia"
             }
@@ -213,13 +264,20 @@ private fun CartaoDia(dia: DiaPrevisao, etiqueta: String?) {
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
-                text = "${dia.dia}${etiqueta?.let { " · $it" } ?: ""}",
+                text = "${dataPorExtenso(dia.dia)}${etiqueta?.let { " · $it" } ?: ""}",
                 style = MaterialTheme.typography.titleMedium
             )
-            Text("Nota: ${dia.nota}/10", style = MaterialTheme.typography.headlineSmall)
+            Text(
+                text = "Nota: ${dia.nota?.let { "$it/10" } ?: "—"}",
+                style = MaterialTheme.typography.headlineSmall
+            )
             Text("Temperatura máxima: ${dia.temperaturaMaxima} °C")
             Text("Probabilidade de chuva: ${dia.probabilidadeChuva}%")
-            Text("Vento: ${descricaoVento(dia.classeVento)}")
+
+            val direcao = dia.direcaoVento?.let { " de $it" } ?: ""
+            val relacao = dia.relacaoVento?.let { " ($it)" } ?: ""
+            Text("Vento: ${descricaoVento(dia.classeVento)}$direcao$relacao")
+
             dia.alturaMaximaMar?.let { Text("Altura máxima do mar: $it m") }
             dia.temperaturaMaximaAgua?.let { Text("Temperatura da água: $it °C") }
         }

@@ -22,10 +22,11 @@ fun FavoritasScreen(
     modifier: Modifier = Modifier
 ) {
     val favoritas by viewModel.favoritas.collectAsState()
+    val dia by viewModel.dia.collectAsState()
 
     Column(modifier.fillMaxSize()) {
         Text(
-            text = "As tuas favoritas hoje",
+            text = "As tuas favoritas para ${viewModel.nomeDia(dia)}",
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.padding(16.dp)
         )

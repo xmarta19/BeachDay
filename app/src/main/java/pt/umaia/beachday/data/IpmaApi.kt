@@ -21,7 +21,8 @@ data class PrevisaoTempo(
     val forecastDate: String,
     val tMax: String,
     val precipitaProb: String,
-    val classWindSpeed: Int
+    val classWindSpeed: Int,
+    val predWindDir: String?
 )
 
 data class RespostaMar(

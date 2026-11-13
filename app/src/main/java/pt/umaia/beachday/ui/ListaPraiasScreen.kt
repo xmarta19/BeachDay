@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import pt.umaia.beachday.data.Perfil
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -39,6 +40,7 @@ private val tipos = listOf("Costeiras", "Fluviais", "Todas")
 @Composable
 fun ListaPraiasScreen(
     onAbrirPraia: (Int) -> Unit,
+    onMudarDia: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: PraiasViewModel = viewModel()
 ) {
@@ -49,8 +51,17 @@ fun ListaPraiasScreen(
     val temRede by viewModel.temRede.collectAsState()
     val aAtualizar by viewModel.aAtualizar.collectAsState()
     val ultimaAtualizacao by viewModel.ultimaAtualizacao.collectAsState()
+    val dia by viewModel.dia.collectAsState()
+    val perfil by viewModel.perfil.collectAsState()
 
     Column(modifier.fillMaxSize()) {
+        TextButton(
+            onClick = onMudarDia,
+            modifier = Modifier.padding(start = 8.dp, top = 8.dp)
+        ) {
+            Text("← Mudar dia")
+        }
+
         if (!temRede) {
             Card(
                 modifier = Modifier
@@ -89,7 +100,7 @@ fun ListaPraiasScreen(
             }
         }
 
-        LazyRow(
+        if (perfil != Perfil.SURF) LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
@@ -103,15 +114,18 @@ fun ListaPraiasScreen(
         }
 
         Text(
-            text = "Melhores praias para hoje",
+            text = "Melhores praias para ${viewModel.nomeDia(dia)}",
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp)
         )
         Text(
-            text = if (tipo == "Costeiras") {
-                "Praias com os mesmos dados do IPMA têm a mesma nota."
-            } else {
-                "As notas das praias fluviais não incluem os dados do mar."
+            text = when {
+                perfil == Perfil.SURF ->
+                    "Perfil ${perfil.nome}: só praias costeiras."
+                tipo == "Costeiras" ->
+                    "Perfil ${perfil.nome}. Praias com os mesmos dados do IPMA têm a mesma nota."
+                else ->
+                    "Perfil ${perfil.nome}. As praias fluviais não usam os dados do mar."
             },
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.padding(16.dp)

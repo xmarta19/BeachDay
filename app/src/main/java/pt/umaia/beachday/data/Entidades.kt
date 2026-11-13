@@ -47,7 +47,8 @@ data class CacheTempo(
     val temperaturaMaxima: Double,
     val probabilidadeChuva: Double,
     val classeVento: Int,
-    val atualizadoEm: Long
+    val atualizadoEm: Long,
+    val direcaoVento: String? = null
 )
 
 @Entity(tableName = "CacheMar", primaryKeys = ["idLocal", "dia"])
