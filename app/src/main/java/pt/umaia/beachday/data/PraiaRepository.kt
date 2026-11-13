@@ -10,11 +10,18 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+private const val VALIDADE_DADOS = 30 * 60 * 1000L
+
 class PraiaRepository(
     private val context: Context,
     private val dao: PraiaDao,
     private val api: IpmaApi
 ) {
+    private fun recente(instante: Long?): Boolean =
+        instante != null && System.currentTimeMillis() - instante < VALIDADE_DADOS
+
+    suspend fun dadosRecentes(): Boolean = recente(dao.ultimaAtualizacaoAgora())
+
     fun obter(id: Int) = dao.obter(id)
 
     fun ultimaAtualizacao() = dao.ultimaAtualizacao()
@@ -102,8 +109,7 @@ class PraiaRepository(
         regiao: String?,
         tipo: String,
         dia: String,
-        perfil: Perfil,
-        regras: Regras
+        perfil: PerfilUtilizador?
     ) = combine(
         dao.pesquisar(pesquisa, regiao),
         dao.tempoDoDia(dia),
@@ -115,26 +121,25 @@ class PraiaRepository(
                 "Fluviais" -> praia.tipo == "fluvial"
                 else -> true
             }
-            val perfilCerto = perfil != Perfil.SURF || praia.tipo != "fluvial"
+            val perfilCerto = !perfilPrecisaDeMar(perfil) || praia.tipo != "fluvial"
             tipoCerto && perfilCerto
         }
-        ordenarPorNota(filtradas, tempo, mar, perfil, regras)
+        ordenarPorNota(filtradas, tempo, mar, perfil)
     }
 
-    fun rankingFavoritas(dia: String, perfil: Perfil, regras: Regras) = combine(
+    fun rankingFavoritas(dia: String, perfil: PerfilUtilizador?) = combine(
         dao.favoritas(),
         dao.tempoDoDia(dia),
         dao.marDoDia(dia)
     ) { praias, tempo, mar ->
-        ordenarPorNota(praias, tempo, mar, perfil, regras)
+        ordenarPorNota(praias, tempo, mar, perfil)
     }
 
     private fun ordenarPorNota(
         praias: List<Praia>,
         tempo: List<CacheTempo>,
         mar: List<CacheMar>,
-        perfil: Perfil,
-        regras: Regras
+        perfil: PerfilUtilizador?
     ): List<PraiaRanking> {
         val tempoPorLocal = tempo.associateBy { it.idLocal }
         val marPorLocal = mar.associateBy { it.idLocal }
@@ -145,12 +150,10 @@ class PraiaRepository(
             val nota = diaTempo?.let {
                 calcularNota(
                     perfil = perfil,
-                    regras = regras,
                     praia = praia,
                     temperaturaMaxima = it.temperaturaMaxima,
                     probabilidadeChuva = it.probabilidadeChuva,
                     classeVento = it.classeVento,
-                    direcaoVento = it.direcaoVento,
                     alturaMaximaMar = diaMar?.alturaMaximaMar,
                     temperaturaMaximaAgua = diaMar?.temperaturaMaximaAgua
                 )
@@ -188,9 +191,12 @@ class PraiaRepository(
         }
 
     suspend fun atualizarPrevisao(praia: Praia) {
-        praia.idLocalTempo?.let { id -> guardarTempo(id) }
+        praia.idLocalTempo?.let { id ->
+            if (!recente(dao.atualizacaoTempo(id))) guardarTempo(id)
+        }
 
         praia.idLocalMar?.let { id ->
+            if (recente(dao.atualizacaoMar(id))) return
             val agora = System.currentTimeMillis()
             val dados = (0..2).mapNotNull { dia ->
                 val resposta = api.obterPrevisaoMar(dia)
@@ -207,7 +213,7 @@ class PraiaRepository(
         }
     }
 
-    fun previsao(praia: Praia, perfil: Perfil, regras: Regras) = run {
+    fun previsao(praia: Praia, perfil: PerfilUtilizador?) = run {
         val hoje = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
         val orientacao = orientacaoPraia(praia)
 
@@ -217,6 +223,15 @@ class PraiaRepository(
         ) { tempo, mar ->
             tempo.map { dia ->
                 val diaMar = mar.find { it.dia == dia.dia }
+                val avaliacao = avaliar(
+                    perfil = perfil,
+                    praia = praia,
+                    temperaturaMaxima = dia.temperaturaMaxima,
+                    probabilidadeChuva = dia.probabilidadeChuva,
+                    classeVento = dia.classeVento,
+                    alturaMaximaMar = diaMar?.alturaMaximaMar,
+                    temperaturaMaximaAgua = diaMar?.temperaturaMaximaAgua
+                )
                 DiaPrevisao(
                     dia = dia.dia,
                     temperaturaMaxima = dia.temperaturaMaxima,
@@ -226,17 +241,8 @@ class PraiaRepository(
                     relacaoVento = relacaoVento(dia.direcaoVento, orientacao),
                     alturaMaximaMar = diaMar?.alturaMaximaMar,
                     temperaturaMaximaAgua = diaMar?.temperaturaMaximaAgua,
-                    nota = calcularNota(
-                        perfil = perfil,
-                        regras = regras,
-                        praia = praia,
-                        temperaturaMaxima = dia.temperaturaMaxima,
-                        probabilidadeChuva = dia.probabilidadeChuva,
-                        classeVento = dia.classeVento,
-                        direcaoVento = dia.direcaoVento,
-                        alturaMaximaMar = diaMar?.alturaMaximaMar,
-                        temperaturaMaximaAgua = diaMar?.temperaturaMaximaAgua
-                    )
+                    nota = avaliacao?.nota,
+                    penalizacoes = avaliacao?.penalizacoes ?: emptyList()
                 )
             }
         }

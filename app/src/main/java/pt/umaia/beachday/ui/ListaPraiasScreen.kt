@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
@@ -25,7 +27,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import pt.umaia.beachday.data.Perfil
+import pt.umaia.beachday.data.NOME_PERFIL_PREDEFINIDO
+import pt.umaia.beachday.data.perfilPrecisaDeMar
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -53,6 +56,22 @@ fun ListaPraiasScreen(
     val ultimaAtualizacao by viewModel.ultimaAtualizacao.collectAsState()
     val dia by viewModel.dia.collectAsState()
     val perfil by viewModel.perfil.collectAsState()
+    val nomePerfil = perfil?.nome ?: NOME_PERFIL_PREDEFINIDO
+    val soCosteiras = perfilPrecisaDeMar(perfil)
+    val botaoBloqueado by viewModel.botaoBloqueado.collectAsState()
+    val erro by viewModel.erroAtualizacao.collectAsState()
+
+    val semDados = ultimaAtualizacao == null && !aAtualizar && (erro != null || !temRede)
+    if (semDados) {
+        EcraSemDados(
+            motivo = if (!temRede) "Não tens ligação à internet." else erro.orEmpty(),
+            podeTentar = temRede,
+            onTentar = { viewModel.atualizar() },
+            onMudarDia = onMudarDia,
+            modifier = modifier
+        )
+        return
+    }
 
     Column(modifier.fillMaxSize()) {
         TextButton(
@@ -70,6 +89,21 @@ fun ListaPraiasScreen(
             ) {
                 Text(
                     text = "Sem ligação. A mostrar os últimos dados guardados.",
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+        } else if (erro != null) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, top = 16.dp, end = 16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                )
+            ) {
+                Text(
+                    text = "Não foi possível atualizar. A mostrar dados de " +
+                        textoData(ultimaAtualizacao) + ".",
                     modifier = Modifier.padding(16.dp)
                 )
             }
@@ -100,7 +134,7 @@ fun ListaPraiasScreen(
             }
         }
 
-        if (perfil != Perfil.SURF) LazyRow(
+        if (!soCosteiras) LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
@@ -120,12 +154,12 @@ fun ListaPraiasScreen(
         )
         Text(
             text = when {
-                perfil == Perfil.SURF ->
-                    "Perfil ${perfil.nome}: só praias costeiras."
+                soCosteiras ->
+                    "Perfil $nomePerfil: só praias costeiras, porque pede ondas."
                 tipo == "Costeiras" ->
-                    "Perfil ${perfil.nome}. Praias com os mesmos dados do IPMA têm a mesma nota."
+                    "Perfil $nomePerfil. Praias com os mesmos dados do IPMA têm a mesma nota."
                 else ->
-                    "Perfil ${perfil.nome}. As praias fluviais não usam os dados do mar."
+                    "Perfil $nomePerfil. As praias fluviais não usam os dados do mar."
             },
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.padding(16.dp)
@@ -144,9 +178,15 @@ fun ListaPraiasScreen(
             )
             TextButton(
                 onClick = { viewModel.atualizar() },
-                enabled = temRede && !aAtualizar
+                enabled = temRede && !aAtualizar && !botaoBloqueado
             ) {
-                Text(if (aAtualizar) "A atualizar..." else "Atualizar")
+                Text(
+                    when {
+                        aAtualizar -> "A atualizar..."
+                        botaoBloqueado -> "Atualizado agora"
+                        else -> "Atualizar"
+                    }
+                )
             }
         }
 
@@ -169,6 +209,43 @@ fun ListaPraiasScreen(
             }
         }
     }
+}
+
+@Composable
+private fun EcraSemDados(
+    motivo: String,
+    podeTentar: Boolean,
+    onTentar: () -> Unit,
+    onMudarDia: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text("Sem dados para mostrar", style = MaterialTheme.typography.headlineSmall)
+        Text(motivo)
+        Text(
+            text = "A app precisa de ligar ao IPMA pelo menos uma vez.",
+            style = MaterialTheme.typography.bodySmall
+        )
+        Button(onClick = onTentar, enabled = podeTentar) {
+            Text("Tentar outra vez")
+        }
+        TextButton(onClick = onMudarDia) {
+            Text("← Mudar dia")
+        }
+    }
+}
+
+private fun textoData(instante: Long?): String {
+    if (instante == null) return "uma atualização anterior"
+
+    val formato = SimpleDateFormat("dd/MM 'às' HH:mm", Locale.forLanguageTag("pt-PT"))
+    return formato.format(Date(instante))
 }
 
 private fun textoAtualizacao(instante: Long?): String {

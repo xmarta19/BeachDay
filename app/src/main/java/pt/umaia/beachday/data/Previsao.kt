@@ -1,18 +1,20 @@
 package pt.umaia.beachday.data
 
-enum class Perfil(val nome: String, val descricao: String) {
-    APANHAR_SOL("Apanhar sol", "Um dia normal de praia: sol, areal e banho."),
-    SURF("Surf e bodyboard", "Boas ondas e pouco vento. Só praias costeiras."),
-    KITE("Kite e windsurf", "Vento suficiente, sem ser perigoso."),
-    PERSONALIZADO("Personalizado", "Escolhes os teus próprios limites.")
-}
+import java.util.Locale
 
-data class Regras(
-    val temperaturaMinima: Double = 25.0,
-    val chuvaMaxima: Double = 15.0,
-    val ventoMaximo: Int = 2,
-    val marMaximo: Double = 1.5,
-    val aguaMinima: Double = 20.0
+const val NOME_PERFIL_PREDEFINIDO = "Apanhar sol"
+
+enum class Condicao { TEMPERATURA, CHUVA, VENTO, MAR, AGUA }
+
+data class Penalizacao(
+    val condicao: Condicao,
+    val motivo: String,
+    val pontos: Int
+)
+
+data class Avaliacao(
+    val nota: Int,
+    val penalizacoes: List<Penalizacao>
 )
 
 data class DiaPrevisao(
@@ -24,7 +26,8 @@ data class DiaPrevisao(
     val relacaoVento: String?,
     val alturaMaximaMar: Double?,
     val temperaturaMaximaAgua: Double?,
-    val nota: Int?
+    val nota: Int?,
+    val penalizacoes: List<Penalizacao>
 )
 
 fun orientacaoPraia(praia: Praia): String? = when {
@@ -55,204 +58,174 @@ fun relacaoVento(direcao: String?, orientacao: String?): String? {
 }
 
 fun calcularNota(
-    perfil: Perfil,
-    regras: Regras,
+    perfil: PerfilUtilizador?,
     praia: Praia,
     temperaturaMaxima: Double,
     probabilidadeChuva: Double,
     classeVento: Int,
-    direcaoVento: String?,
     alturaMaximaMar: Double?,
     temperaturaMaximaAgua: Double?
-): Int? {
-    val relacao = relacaoVento(direcaoVento, orientacaoPraia(praia))
+): Int? = avaliar(
+    perfil, praia, temperaturaMaxima, probabilidadeChuva,
+    classeVento, alturaMaximaMar, temperaturaMaximaAgua
+)?.nota
 
-    val penalizacao = when (perfil) {
-        Perfil.APANHAR_SOL -> penalizacaoSol(
+fun perfilPrecisaDeMar(perfil: PerfilUtilizador?): Boolean = perfil?.marMinimo != null
+
+fun avaliar(
+    perfil: PerfilUtilizador?,
+    praia: Praia,
+    temperaturaMaxima: Double,
+    probabilidadeChuva: Double,
+    classeVento: Int,
+    alturaMaximaMar: Double?,
+    temperaturaMaximaAgua: Double?
+): Avaliacao? {
+    if (perfilPrecisaDeMar(perfil) && (praia.tipo == "fluvial" || alturaMaximaMar == null)) {
+        return null
+    }
+
+    val lista = mutableListOf<Penalizacao>()
+
+    if (perfil == null) {
+        lista.penalizacoesSol(
             temperaturaMaxima, probabilidadeChuva, classeVento,
             alturaMaximaMar, temperaturaMaximaAgua
         )
-        Perfil.SURF -> {
-            if (praia.tipo == "fluvial" || alturaMaximaMar == null) return null
-            penalizacaoSurf(
-                temperaturaMaxima, probabilidadeChuva, classeVento, relacao,
-                alturaMaximaMar, temperaturaMaximaAgua
-            )
-        }
-        Perfil.KITE -> penalizacaoKite(
-            temperaturaMaxima, probabilidadeChuva, classeVento, relacao,
-            alturaMaximaMar, temperaturaMaximaAgua
-        )
-        Perfil.PERSONALIZADO -> penalizacaoPersonalizada(
-            regras, temperaturaMaxima, probabilidadeChuva, classeVento,
+    } else {
+        lista.penalizacoesPersonalizadas(
+            perfil, temperaturaMaxima, probabilidadeChuva, classeVento,
             alturaMaximaMar, temperaturaMaximaAgua
         )
     }
 
-    return (10 - penalizacao).coerceIn(0, 10)
+    val nota = (10 - lista.sumOf { it.pontos }).coerceIn(0, 10)
+    return Avaliacao(nota, lista)
 }
 
-private fun penalizacaoSol(
+private fun MutableList<Penalizacao>.tirar(pontos: Int, condicao: Condicao, motivo: String) {
+    if (pontos > 0) add(Penalizacao(condicao, motivo, pontos))
+}
+
+private fun decimal(valor: Double): String =
+    String.format(Locale.forLanguageTag("pt-PT"), "%.1f", valor)
+
+private fun inteiro(valor: Double): String =
+    String.format(Locale.forLanguageTag("pt-PT"), "%.0f", valor)
+
+private fun MutableList<Penalizacao>.penalizacoesSol(
     temperatura: Double,
     chuva: Double,
     vento: Int,
     mar: Double?,
     agua: Double?
-): Int {
-    var total = 0
-
-    total += when {
-        temperatura >= 25 -> 0
-        temperatura >= 18 -> 2
-        else -> 4
-    }
-    total += when {
-        chuva <= 15 -> 0
-        chuva <= 30 -> 1
-        chuva <= 60 -> 3
-        else -> 5
-    }
-    total += when {
-        vento >= 4 -> 3
-        vento == 3 -> 2
-        else -> 0
-    }
-    if (mar != null) {
-        total += when {
-            mar > 2.5 -> 3
-            mar >= 1.5 -> 2
-            else -> 0
-        }
-    }
-    if (agua != null) {
-        total += when {
-            agua < 10 -> 3
-            agua < 15 -> 2
-            agua < 20 -> 1
-            else -> 0
-        }
-    }
-
-    return total
-}
-
-private fun penalizacaoSurf(
-    temperatura: Double,
-    chuva: Double,
-    vento: Int,
-    relacao: String?,
-    mar: Double,
-    agua: Double?
-): Int {
-    var total = 0
-
-    total += when {
-        mar < 0.5 -> 5
-        mar < 1.0 -> 2
-        mar <= 2.5 -> 0
-        mar <= 3.5 -> 2
-        else -> 5
-    }
-    total += when (vento) {
-        1 -> 0
-        2 -> 1
-        3 -> 3
-        else -> 5
-    }
-    total += when (relacao) {
-        "do mar" -> 2
-        "lateral" -> 1
-        else -> 0
-    }
-    total += when {
-        chuva <= 30 -> 0
-        chuva <= 60 -> 1
-        else -> 3
-    }
-    if (temperatura < 18) total += 1
-    if (agua != null && agua < 15) total += 1
-
-    return total
-}
-
-private fun penalizacaoKite(
-    temperatura: Double,
-    chuva: Double,
-    vento: Int,
-    relacao: String?,
-    mar: Double?,
-    agua: Double?
-): Int {
-    var total = 0
-
-    total += when (vento) {
-        1 -> 5
-        2 -> 0
-        3 -> 1
-        else -> 5
-    }
-    total += when (relacao) {
-        "terral" -> 4
-        "do mar" -> 1
-        else -> 0
-    }
-    if (mar != null) {
-        total += when {
-            mar <= 2.5 -> 0
-            mar <= 3.5 -> 2
+) {
+    tirar(
+        when {
+            temperatura >= 25 -> 0
+            temperatura >= 18 -> 2
             else -> 4
-        }
+        },
+        Condicao.TEMPERATURA, "Temperatura de ${decimal(temperatura)} °C"
+    )
+    tirar(
+        when {
+            chuva <= 15 -> 0
+            chuva <= 30 -> 1
+            chuva <= 60 -> 3
+            else -> 5
+        },
+        Condicao.CHUVA, "Chuva de ${inteiro(chuva)}%"
+    )
+    tirar(
+        when {
+            vento >= 4 -> 3
+            vento == 3 -> 2
+            else -> 0
+        },
+        Condicao.VENTO, "Vento ${descricaoVento(vento).lowercase()}"
+    )
+    if (mar != null) {
+        tirar(
+            when {
+                mar > 2.5 -> 3
+                mar >= 1.5 -> 2
+                else -> 0
+            },
+            Condicao.MAR, "Mar de ${decimal(mar)} m"
+        )
     }
-    total += when {
-        chuva <= 30 -> 0
-        chuva <= 60 -> 1
-        else -> 3
+    if (agua != null) {
+        tirar(
+            when {
+                agua < 10 -> 3
+                agua < 15 -> 2
+                agua < 20 -> 1
+                else -> 0
+            },
+            Condicao.AGUA, "Água a ${decimal(agua)} °C"
+        )
     }
-    if (temperatura < 15) total += 1
-    if (agua != null && agua < 15) total += 1
-
-    return total
 }
 
-private fun penalizacaoPersonalizada(
-    regras: Regras,
+private fun MutableList<Penalizacao>.penalizacoesPersonalizadas(
+    limites: PerfilUtilizador,
     temperatura: Double,
     chuva: Double,
     vento: Int,
     mar: Double?,
     agua: Double?
-): Int {
-    var total = 0
-
-    total += when {
-        temperatura >= regras.temperaturaMinima -> 0
-        temperatura >= regras.temperaturaMinima - 5 -> 2
-        else -> 4
-    }
-    total += when {
-        chuva <= regras.chuvaMaxima -> 0
-        chuva <= regras.chuvaMaxima + 30 -> 2
-        else -> 5
-    }
-    if (vento > regras.ventoMaximo) {
-        total += 2 * (vento - regras.ventoMaximo)
+) {
+    tirar(
+        when {
+            temperatura >= limites.temperaturaMinima -> 0
+            temperatura >= limites.temperaturaMinima - 5 -> 2
+            else -> 4
+        },
+        Condicao.TEMPERATURA, "Temperatura de ${decimal(temperatura)} °C"
+    )
+    tirar(
+        when {
+            chuva <= limites.chuvaMaxima -> 0
+            chuva <= limites.chuvaMaxima + 30 -> 2
+            else -> 5
+        },
+        Condicao.CHUVA, "Chuva de ${inteiro(chuva)}%"
+    )
+    tirar(
+        if (vento > limites.ventoMaximo) 2 * (vento - limites.ventoMaximo) else 0,
+        Condicao.VENTO, "Vento ${descricaoVento(vento).lowercase()}"
+    )
+    if (mar != null && limites.marMinimo != null) {
+        tirar(
+            when {
+                mar >= limites.marMinimo -> 0
+                mar >= limites.marMinimo - 0.5 -> 2
+                else -> 5
+            },
+            Condicao.MAR, "Mar de ${decimal(mar)} m (pouca onda)"
+        )
     }
     if (mar != null) {
-        total += when {
-            mar <= regras.marMaximo -> 0
-            mar <= regras.marMaximo + 1 -> 2
-            else -> 3
-        }
+        tirar(
+            when {
+                mar <= limites.marMaximo -> 0
+                mar <= limites.marMaximo + 1 -> 2
+                else -> 3
+            },
+            Condicao.MAR, "Mar de ${decimal(mar)} m"
+        )
     }
     if (agua != null) {
-        total += when {
-            agua >= regras.aguaMinima -> 0
-            agua >= regras.aguaMinima - 5 -> 1
-            else -> 3
-        }
+        tirar(
+            when {
+                agua >= limites.aguaMinima -> 0
+                agua >= limites.aguaMinima - 5 -> 1
+                else -> 3
+            },
+            Condicao.AGUA, "Água a ${decimal(agua)} °C"
+        )
     }
-
-    return total
 }
 
 fun descricaoVento(classe: Int): String = when (classe) {

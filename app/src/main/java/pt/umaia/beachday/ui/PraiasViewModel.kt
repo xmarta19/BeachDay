@@ -7,6 +7,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.JsonParseException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -16,10 +17,9 @@ import kotlinx.coroutines.launch
 import pt.umaia.beachday.data.AppDatabase
 import pt.umaia.beachday.data.AvisoIpma
 import pt.umaia.beachday.data.IpmaApi
-import pt.umaia.beachday.data.Perfil
+import pt.umaia.beachday.data.PerfilUtilizador
 import pt.umaia.beachday.data.Praia
 import pt.umaia.beachday.data.PraiaRepository
-import pt.umaia.beachday.data.Regras
 import pt.umaia.beachday.data.estadoRede
 import pt.umaia.beachday.data.marcarAvisos
 import retrofit2.HttpException
@@ -33,8 +33,7 @@ private data class Pedido(
     val regiao: String?,
     val tipo: String,
     val dia: String,
-    val perfil: Perfil,
-    val regras: Regras
+    val perfil: PerfilUtilizador?
 )
 
 class PraiasViewModel(application: Application) : AndroidViewModel(application) {
@@ -43,6 +42,8 @@ class PraiasViewModel(application: Application) : AndroidViewModel(application) 
         AppDatabase.obter(application).praiaDao(),
         IpmaApi.criar()
     )
+
+    private val perfilDao = AppDatabase.obter(application).perfilDao()
 
     private val preferencias =
         application.getSharedPreferences("beachday", Context.MODE_PRIVATE)
@@ -57,10 +58,18 @@ class PraiasViewModel(application: Application) : AndroidViewModel(application) 
     val regiao = MutableStateFlow<String?>(null)
     val tipo = MutableStateFlow("Costeiras")
     val dia = MutableStateFlow(dias.first())
-    val perfil = MutableStateFlow(lerPerfil())
-    val regras = MutableStateFlow(lerRegras())
+    val idPerfil = MutableStateFlow(preferencias.getInt("idPerfil", 0))
+
+    val perfis = perfilDao.todos()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    val perfil = combine(idPerfil, perfis) { id, lista -> lista.find { it.id == id } }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
     val avisos = MutableStateFlow<List<AvisoIpma>>(emptyList())
     val aAtualizar = MutableStateFlow(false)
+    val botaoBloqueado = MutableStateFlow(false)
+    val erroAtualizacao = MutableStateFlow<String?>(null)
+    private var avisosCarregados = false
 
     val temRede = estadoRede(application)
         .stateIn(viewModelScope, SharingStarted.Eagerly, true)
@@ -72,26 +81,25 @@ class PraiasViewModel(application: Application) : AndroidViewModel(application) 
     val praias = combine(
         combine(pesquisa, regiao, tipo) { texto, zona, filtro -> Triple(texto, zona, filtro) },
         dia,
-        perfil,
-        regras
-    ) { (texto, zona, filtro), diaEscolhido, perfilAtual, regrasAtuais ->
-        Pedido(texto, zona, filtro, diaEscolhido, perfilAtual, regrasAtuais)
+        perfil
+    ) { (texto, zona, filtro), diaEscolhido, perfilAtual ->
+        Pedido(texto, zona, filtro, diaEscolhido, perfilAtual)
     }.flatMapLatest { pedido ->
         combine(
             repository.ranking(
                 pedido.pesquisa, pedido.regiao, pedido.tipo,
-                pedido.dia, pedido.perfil, pedido.regras
+                pedido.dia, pedido.perfil
             ),
             avisos
         ) { lista, avisosAtuais -> marcarAvisos(lista, avisosAtuais, pedido.dia) }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val favoritas = combine(dia, perfil, regras) { diaEscolhido, perfilAtual, regrasAtuais ->
-        Triple(diaEscolhido, perfilAtual, regrasAtuais)
-    }.flatMapLatest { (diaEscolhido, perfilAtual, regrasAtuais) ->
+    val favoritas = combine(dia, perfil) { diaEscolhido, perfilAtual ->
+        diaEscolhido to perfilAtual
+    }.flatMapLatest { (diaEscolhido, perfilAtual) ->
         combine(
-            repository.rankingFavoritas(diaEscolhido, perfilAtual, regrasAtuais),
+            repository.rankingFavoritas(diaEscolhido, perfilAtual),
             avisos
         ) { lista, avisosAtuais -> marcarAvisos(lista, avisosAtuais, diaEscolhido) }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -117,71 +125,70 @@ class PraiasViewModel(application: Application) : AndroidViewModel(application) 
         dia.value = valor
     }
 
-    fun escolherPerfil(novo: Perfil) {
-        perfil.value = novo
-        preferencias.edit().putString("perfil", novo.name).apply()
+    fun escolherPerfil(id: Int) {
+        idPerfil.value = id
+        preferencias.edit().putInt("idPerfil", id).apply()
     }
 
-    fun alterarRegras(novas: Regras) {
-        regras.value = novas
-        preferencias.edit()
-            .putFloat("temperaturaMinima", novas.temperaturaMinima.toFloat())
-            .putFloat("chuvaMaxima", novas.chuvaMaxima.toFloat())
-            .putInt("ventoMaximo", novas.ventoMaximo)
-            .putFloat("marMaximo", novas.marMaximo.toFloat())
-            .putFloat("aguaMinima", novas.aguaMinima.toFloat())
-            .apply()
+    fun guardarPerfil(novo: PerfilUtilizador) {
+        viewModelScope.launch {
+            val id = perfilDao.guardar(novo).toInt()
+            escolherPerfil(id)
+        }
     }
 
-    private fun lerPerfil(): Perfil {
-        val guardado = preferencias.getString("perfil", null)
-        return Perfil.entries.firstOrNull { it.name == guardado } ?: Perfil.APANHAR_SOL
-    }
-
-    private fun lerRegras(): Regras {
-        val base = Regras()
-        return Regras(
-            temperaturaMinima = preferencias.getFloat(
-                "temperaturaMinima", base.temperaturaMinima.toFloat()
-            ).toDouble(),
-            chuvaMaxima = preferencias.getFloat(
-                "chuvaMaxima", base.chuvaMaxima.toFloat()
-            ).toDouble(),
-            ventoMaximo = preferencias.getInt("ventoMaximo", base.ventoMaximo),
-            marMaximo = preferencias.getFloat(
-                "marMaximo", base.marMaximo.toFloat()
-            ).toDouble(),
-            aguaMinima = preferencias.getFloat(
-                "aguaMinima", base.aguaMinima.toFloat()
-            ).toDouble()
-        )
+    fun apagarPerfil(antigo: PerfilUtilizador) {
+        viewModelScope.launch {
+            perfilDao.apagar(antigo)
+            if (idPerfil.value == antigo.id) escolherPerfil(0)
+        }
     }
 
     fun atualizar() {
-        if (!temRede.value || aAtualizar.value) return
-        viewModelScope.launch { atualizarDados() }
+        if (!temRede.value || aAtualizar.value || botaoBloqueado.value) return
+        viewModelScope.launch { atualizarDados(forcar = true) }
     }
 
-    private suspend fun atualizarDados() {
+    private suspend fun atualizarDados(forcar: Boolean = false) {
+        if (!forcar && repository.dadosRecentes()) {
+            if (!avisosCarregados) atualizarAvisos()
+            return
+        }
+
         aAtualizar.value = true
+        var correuBem = false
 
         try {
             repository.associarAoIpma()
-            repository.atualizarDias(regiao.value)
+            repository.atualizarDias(null)
+            erroAtualizacao.value = null
+            correuBem = true
         } catch (e: IOException) {
             Log.e("BeachDay", "Sem ligação ao IPMA", e)
+            erroAtualizacao.value = "Não foi possível ligar ao IPMA."
         } catch (e: HttpException) {
             Log.e("BeachDay", "Erro do IPMA: ${e.code()}", e)
+            erroAtualizacao.value = "O IPMA respondeu com um erro (${e.code()})."
+        } catch (e: JsonParseException) {
+            Log.e("BeachDay", "Formato inesperado do IPMA", e)
+            erroAtualizacao.value = "O IPMA enviou dados num formato inesperado."
         } finally {
             aAtualizar.value = false
         }
 
         atualizarAvisos()
+
+        if (forcar && correuBem) {
+            botaoBloqueado.value = true
+            delay(30_000)
+            botaoBloqueado.value = false
+        }
     }
 
     private suspend fun atualizarAvisos() {
         try {
             avisos.value = repository.obterAvisos()
+            avisosCarregados = true
         } catch (e: IOException) {
             Log.e("BeachDay", "Sem ligação aos avisos do IPMA", e)
         } catch (e: HttpException) {
@@ -193,17 +200,6 @@ class PraiasViewModel(application: Application) : AndroidViewModel(application) 
 
     fun escolherRegiao(novaRegiao: String?) {
         regiao.value = novaRegiao
-        if (!temRede.value) return
-
-        viewModelScope.launch {
-            try {
-                repository.atualizarDias(novaRegiao)
-            } catch (e: IOException) {
-                Log.e("BeachDay", "Sem ligação ao IPMA", e)
-            } catch (e: HttpException) {
-                Log.e("BeachDay", "Erro do IPMA: ${e.code()}", e)
-            }
-        }
     }
 
     fun definirFavorita(id: Int, favorita: Boolean) {
@@ -222,20 +218,24 @@ class PraiasViewModel(application: Application) : AndroidViewModel(application) 
 
     fun praia(id: Int) = repository.obter(id)
 
-    fun previsao(praia: Praia, perfilAtual: Perfil, regrasAtuais: Regras) =
-        repository.previsao(praia, perfilAtual, regrasAtuais)
+    fun previsao(praia: Praia, perfilAtual: PerfilUtilizador?) =
+        repository.previsao(praia, perfilAtual)
 
-    fun atualizarPrevisao(praia: Praia) {
-        if (!temRede.value) return
+    suspend fun carregarPrevisao(praia: Praia): String? {
+        if (!temRede.value) return null
 
-        viewModelScope.launch {
-            try {
-                repository.atualizarPrevisao(praia)
-            } catch (e: IOException) {
-                Log.e("BeachDay", "Sem ligação ao IPMA", e)
-            } catch (e: HttpException) {
-                Log.e("BeachDay", "Erro do IPMA: ${e.code()}", e)
-            }
+        return try {
+            repository.atualizarPrevisao(praia)
+            null
+        } catch (e: IOException) {
+            Log.e("BeachDay", "Sem ligação ao IPMA", e)
+            "Não foi possível ligar ao IPMA."
+        } catch (e: HttpException) {
+            Log.e("BeachDay", "Erro do IPMA: ${e.code()}", e)
+            "O IPMA respondeu com um erro (${e.code()})."
+        } catch (e: JsonParseException) {
+            Log.e("BeachDay", "Formato inesperado do IPMA", e)
+            "O IPMA enviou dados num formato inesperado."
         }
     }
 }

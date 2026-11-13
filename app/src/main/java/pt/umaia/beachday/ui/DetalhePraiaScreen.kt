@@ -1,5 +1,11 @@
 package pt.umaia.beachday.ui
 
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.util.Log
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,12 +32,16 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import pt.umaia.beachday.data.AvisoIpma
+import pt.umaia.beachday.data.Condicao
 import pt.umaia.beachday.data.DiaPrevisao
-import pt.umaia.beachday.data.Perfil
+import pt.umaia.beachday.data.NOME_PERFIL_PREDEFINIDO
+import pt.umaia.beachday.data.perfilPrecisaDeMar
 import pt.umaia.beachday.data.Praia
 import pt.umaia.beachday.data.avisoAtivoEm
 import pt.umaia.beachday.data.descricaoVento
@@ -83,14 +93,17 @@ fun DetalhePraiaScreen(
 
 @Composable
 private fun BotoesMapa(praia: Praia) {
-    val abrirLink = LocalUriHandler.current
+    val context = LocalContext.current
     val coordenadas = "${praia.latitude},${praia.longitude}"
+    val nome = Uri.encode(praia.nome)
 
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Button(
             onClick = {
-                abrirLink.openUri(
-                    "https://www.google.com/maps/dir/?api=1&destination=$coordenadas"
+                abrirMapa(
+                    context,
+                    "https://www.google.com/maps/dir/?api=1&destination=$coordenadas",
+                    null
                 )
             }
         ) {
@@ -98,12 +111,25 @@ private fun BotoesMapa(praia: Praia) {
         }
         OutlinedButton(
             onClick = {
-                abrirLink.openUri(
+                abrirMapa(
+                    context,
+                    "geo:$coordenadas?q=$coordenadas($nome)",
                     "https://www.google.com/maps/search/?api=1&query=$coordenadas"
                 )
             }
         ) {
             Text("Ver no mapa")
+        }
+    }
+}
+
+private fun abrirMapa(context: Context, endereco: String, alternativa: String?) {
+    try {
+        context.startActivity(Intent(Intent.ACTION_VIEW, endereco.toUri()))
+    } catch (erro: ActivityNotFoundException) {
+        Log.w("BeachDay", "Nenhuma app abriu o mapa", erro)
+        if (alternativa != null) {
+            context.startActivity(Intent(Intent.ACTION_VIEW, alternativa.toUri()))
         }
     }
 }
@@ -214,23 +240,29 @@ private fun DialogoVisita(
 @Composable
 private fun PrevisaoPraia(praia: Praia, viewModel: PraiasViewModel) {
     val perfil by viewModel.perfil.collectAsState()
-    val regras by viewModel.regras.collectAsState()
 
-    val dias by remember(praia, perfil, regras) {
-        viewModel.previsao(praia, perfil, regras)
+    val dias by remember(praia, perfil) {
+        viewModel.previsao(praia, perfil)
     }.collectAsState(initial = emptyList())
 
+    var aCarregar by remember(praia.id) { mutableStateOf(true) }
+    var erro by remember(praia.id) { mutableStateOf<String?>(null) }
+
     LaunchedEffect(praia.idLocalTempo, praia.idLocalMar) {
-        viewModel.atualizarPrevisao(praia)
+        aCarregar = true
+        erro = viewModel.carregarPrevisao(praia)
+        aCarregar = false
     }
 
+    val nomePerfil = perfil?.nome ?: NOME_PERFIL_PREDEFINIDO
+
     Text(
-        text = "Notas para o perfil ${perfil.nome}",
+        text = "Notas para o perfil $nomePerfil",
         style = MaterialTheme.typography.titleMedium
     )
 
-    if (perfil == Perfil.SURF && praia.tipo == "fluvial") {
-        Text("O perfil Surf e bodyboard não se aplica a praias fluviais.")
+    if (perfilPrecisaDeMar(perfil) && praia.tipo == "fluvial") {
+        Text("O perfil $nomePerfil pede ondas, por isso não se aplica a praias fluviais.")
     } else if (praia.tipo == "fluvial") {
         Text(
             text = "Sem dados do mar: a nota usa só o tempo.",
@@ -239,8 +271,21 @@ private fun PrevisaoPraia(praia: Praia, viewModel: PraiasViewModel) {
     }
 
     if (dias.isEmpty()) {
-        Text("A carregar a previsão...")
+        Text(
+            when {
+                aCarregar -> "A carregar a previsão..."
+                erro != null -> "$erro Tenta outra vez mais tarde."
+                else -> "Sem previsão disponível para esta praia."
+            }
+        )
     } else {
+        erro?.let {
+            Text(
+                text = "Não foi possível atualizar. A mostrar os dados guardados.",
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+
         val notas = dias.mapNotNull { it.nota }
         val melhorNota = notas.maxOrNull()
         val haEmpate = melhorNota != null && notas.count { it == melhorNota } > 1
@@ -258,6 +303,9 @@ private fun PrevisaoPraia(praia: Praia, viewModel: PraiasViewModel) {
 
 @Composable
 private fun CartaoDia(dia: DiaPrevisao, etiqueta: String?) {
+    fun pontos(condicao: Condicao): Int =
+        dia.penalizacoes.filter { it.condicao == condicao }.sumOf { it.pontos }
+
     Card(Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -271,15 +319,48 @@ private fun CartaoDia(dia: DiaPrevisao, etiqueta: String?) {
                 text = "Nota: ${dia.nota?.let { "$it/10" } ?: "—"}",
                 style = MaterialTheme.typography.headlineSmall
             )
-            Text("Temperatura máxima: ${dia.temperaturaMaxima} °C")
-            Text("Probabilidade de chuva: ${dia.probabilidadeChuva}%")
+
+            LinhaCondicao(
+                "Temperatura máxima: ${dia.temperaturaMaxima} °C",
+                pontos(Condicao.TEMPERATURA)
+            )
+            LinhaCondicao(
+                "Probabilidade de chuva: ${dia.probabilidadeChuva}%",
+                pontos(Condicao.CHUVA)
+            )
 
             val direcao = dia.direcaoVento?.let { " de $it" } ?: ""
             val relacao = dia.relacaoVento?.let { " ($it)" } ?: ""
-            Text("Vento: ${descricaoVento(dia.classeVento)}$direcao$relacao")
+            LinhaCondicao(
+                "Vento: ${descricaoVento(dia.classeVento)}$direcao$relacao",
+                pontos(Condicao.VENTO)
+            )
 
-            dia.alturaMaximaMar?.let { Text("Altura máxima do mar: $it m") }
-            dia.temperaturaMaximaAgua?.let { Text("Temperatura da água: $it °C") }
+            dia.alturaMaximaMar?.let {
+                LinhaCondicao("Altura máxima do mar: $it m", pontos(Condicao.MAR))
+            }
+            dia.temperaturaMaximaAgua?.let {
+                LinhaCondicao("Temperatura da água: $it °C", pontos(Condicao.AGUA))
+            }
+        }
+    }
+}
+
+@Composable
+private fun LinhaCondicao(texto: String, pontos: Int) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(texto, modifier = Modifier.weight(1f))
+        if (pontos > 0) {
+            Text(
+                text = "-$pontos",
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(start = 8.dp)
+            )
         }
     }
 }

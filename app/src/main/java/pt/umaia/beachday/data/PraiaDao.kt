@@ -63,6 +63,15 @@ interface PraiaDao {
     @Query("SELECT MAX(atualizadoEm) FROM CacheTempo")
     fun ultimaAtualizacao(): Flow<Long?>
 
+    @Query("SELECT MAX(atualizadoEm) FROM CacheTempo")
+    suspend fun ultimaAtualizacaoAgora(): Long?
+
+    @Query("SELECT MAX(atualizadoEm) FROM CacheTempo WHERE idLocal = :id")
+    suspend fun atualizacaoTempo(id: Int): Long?
+
+    @Query("SELECT MAX(atualizadoEm) FROM CacheMar WHERE idLocal = :id")
+    suspend fun atualizacaoMar(id: Int): Long?
+
     @Query("UPDATE Praia SET favorita = :favorita WHERE id = :id")
     suspend fun definirFavorita(id: Int, favorita: Boolean)
 
