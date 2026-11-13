@@ -18,12 +18,52 @@ fun calcularNota(
     temperaturaMaximaAgua: Double?
 ): Int {
     var nota = 10
-    if (temperaturaMaxima < 20) nota -= 2
-    if (classeVento >= 3) nota -= 2
-    if (probabilidadeChuva > 40) nota -= 3
-    if (alturaMaximaMar != null && alturaMaximaMar > 1.5) nota -= 2
-    if (temperaturaMaximaAgua != null && temperaturaMaximaAgua < 17) nota -= 1
+
+    nota -= when {
+        temperaturaMaxima >= 25 -> 0
+        temperaturaMaxima >= 18 -> 2
+        else -> 4
+    }
+
+    nota -= when {
+        probabilidadeChuva <= 15 -> 0
+        probabilidadeChuva <= 30 -> 1
+        probabilidadeChuva <= 60 -> 3
+        else -> 5
+    }
+
+    nota -= when {
+        classeVento >= 4 -> 3
+        classeVento == 3 -> 2
+        else -> 0
+    }
+
+    if (alturaMaximaMar != null) {
+        nota -= when {
+            alturaMaximaMar > 2.5 -> 3
+            alturaMaximaMar >= 1.5 -> 2
+            else -> 0
+        }
+    }
+
+    if (temperaturaMaximaAgua != null) {
+        nota -= when {
+            temperaturaMaximaAgua < 10 -> 3
+            temperaturaMaximaAgua < 15 -> 2
+            temperaturaMaximaAgua < 20 -> 1
+            else -> 0
+        }
+    }
+
     return nota.coerceIn(0, 10)
+}
+
+fun descricaoVento(classe: Int): String = when (classe) {
+    1 -> "Fraco"
+    2 -> "Moderado"
+    3 -> "Forte"
+    4 -> "Muito forte"
+    else -> "Sem dados"
 }
 
 data class PraiaRanking(

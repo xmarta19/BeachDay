@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import pt.umaia.beachday.data.AvisoIpma
 import pt.umaia.beachday.data.DiaPrevisao
 import pt.umaia.beachday.data.Praia
+import pt.umaia.beachday.data.descricaoVento
 
 @Composable
 fun DetalhePraiaScreen(
@@ -218,8 +219,8 @@ private fun CartaoDia(dia: DiaPrevisao, etiqueta: String?) {
             Text("Nota: ${dia.nota}/10", style = MaterialTheme.typography.headlineSmall)
             Text("Temperatura máxima: ${dia.temperaturaMaxima} °C")
             Text("Probabilidade de chuva: ${dia.probabilidadeChuva}%")
-            Text("Classe de vento: ${dia.classeVento}")
-            dia.alturaMaximaMar?.let { Text("Mar total máximo: $it m") }
+            Text("Vento: ${descricaoVento(dia.classeVento)}")
+            dia.alturaMaximaMar?.let { Text("Altura máxima do mar: $it m") }
             dia.temperaturaMaximaAgua?.let { Text("Temperatura da água: $it °C") }
         }
     }
