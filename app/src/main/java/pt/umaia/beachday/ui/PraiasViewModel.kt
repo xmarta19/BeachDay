@@ -108,6 +108,20 @@ class PraiasViewModel(application: Application) : AndroidViewModel(application) 
         ) { lista, avisosAtuais -> marcarAvisos(lista, avisosAtuais, diaEscolhido) }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    // Melhor praia de cada um dos 3 dias, para o ecrã de escolha do dia
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val melhoresPorDia = combine(tipo, perfil) { filtro, perfilAtual ->
+        filtro to perfilAtual
+    }.flatMapLatest { (filtro, perfilAtual) ->
+        combine(
+            dias.map { diaLista -> repository.ranking("", null, filtro, diaLista, perfilAtual) }
+        ) { listas ->
+            dias.zip(listas.toList()) { diaLista, lista ->
+                diaLista to lista.firstOrNull { it.nota != null }
+            }.toMap()
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
     val visitas = repository.visitas()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 

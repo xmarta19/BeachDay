@@ -1,10 +1,8 @@
 package pt.umaia.beachday.ui
 
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -15,6 +13,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import pt.umaia.beachday.ui.theme.BeachDay
 
 @Composable
 fun BeachDayApp() {
@@ -38,39 +37,10 @@ fun BeachDayApp() {
     }
 
     Scaffold(
+        containerColor = BeachDay.cores.fundo,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
-            NavigationBar {
-                NavigationBarItem(
-                    selected = rotaAtual == "dias" || rotaAtual == "praias",
-                    onClick = { abrirSeparador("dias") },
-                    icon = { Text("☀") },
-                    label = { Text("Praias") }
-                )
-                NavigationBarItem(
-                    selected = rotaAtual == "favoritas",
-                    onClick = { abrirSeparador("favoritas") },
-                    icon = { Text("★") },
-                    label = { Text("Favoritas") }
-                )
-                NavigationBarItem(
-                    selected = rotaAtual == "historico",
-                    onClick = { abrirSeparador("historico") },
-                    icon = { Text("≡") },
-                    label = { Text("Histórico") }
-                )
-                NavigationBarItem(
-                    selected = rotaAtual == "perfil",
-                    onClick = { abrirSeparador("perfil") },
-                    icon = { Text("⚙") },
-                    label = { Text("Perfil") }
-                )
-                NavigationBarItem(
-                    selected = rotaAtual == "conta",
-                    onClick = { abrirSeparador("conta") },
-                    icon = { Text("☺") },
-                    label = { Text("Conta") }
-                )
-            }
+            NavegacaoInferior(rotaAtual = rotaAtual, onAbrir = { abrirSeparador(it) })
         }
     ) { innerPadding ->
         NavHost(
@@ -81,6 +51,7 @@ fun BeachDayApp() {
             composable("dias") {
                 DiasScreen(
                     onEscolherDia = { navController.navigate("praias") },
+                    onAbrirPerfil = { abrirSeparador("perfil") },
                     viewModel = praiasViewModel
                 )
             }

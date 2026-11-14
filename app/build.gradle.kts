@@ -64,5 +64,6 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
     implementation(libs.kotlinx.coroutines.play.services)
-
+    implementation(libs.osmdroid.android)
+    implementation(libs.androidx.compose.material.icons.extended)
 }

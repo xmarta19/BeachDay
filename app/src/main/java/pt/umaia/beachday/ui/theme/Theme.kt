@@ -1,58 +1,95 @@
 package pt.umaia.beachday.ui.theme
 
 import android.app.Activity
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
+private val LocalCores = staticCompositionLocalOf { CoresClaras }
 
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
-)
+// Acesso às cores da app: BeachDay.cores.fundo, BeachDay.cores.cartao, ...
+object BeachDay {
+    val cores: CoresBeachDay
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalCores.current
+}
 
 @Composable
 fun BeachDayTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    escuro: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
+    val cores = if (escuro) CoresEscuras else CoresClaras
 
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+    val esquema = if (escuro) {
+        darkColorScheme(
+            primary = cores.destaque,
+            onPrimary = Color.White,
+            secondary = cores.azul,
+            background = cores.fundo,
+            onBackground = cores.texto,
+            surface = cores.cartao,
+            onSurface = cores.texto,
+            surfaceVariant = cores.bloco,
+            onSurfaceVariant = cores.textoSecundario,
+            surfaceContainer = cores.cartao,
+            surfaceContainerHigh = cores.cartao,
+            surfaceContainerHighest = cores.bloco,
+            secondaryContainer = cores.segmentoAtivo,
+            onSecondaryContainer = Color.White,
+            outline = cores.linhaForte,
+            outlineVariant = cores.linha,
+            error = cores.negativo
+        )
+    } else {
+        lightColorScheme(
+            primary = cores.destaque,
+            onPrimary = Color.White,
+            secondary = cores.azul,
+            background = cores.fundo,
+            onBackground = cores.texto,
+            surface = cores.cartao,
+            onSurface = cores.texto,
+            surfaceVariant = cores.bloco,
+            onSurfaceVariant = cores.textoSecundario,
+            surfaceContainer = cores.cartao,
+            surfaceContainerHigh = cores.cartao,
+            surfaceContainerHighest = cores.bloco,
+            secondaryContainer = cores.chip,
+            onSecondaryContainer = cores.texto,
+            outline = cores.linhaForte,
+            outlineVariant = cores.linha,
+            error = cores.negativo
+        )
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as Activity).window
+            WindowCompat.getInsetsController(window, view).apply {
+                // O topo é sempre azul-escuro, por isso os ícones da barra de estado são claros
+                isAppearanceLightStatusBars = false
+                isAppearanceLightNavigationBars = !escuro
+            }
+        }
+    }
+
+    CompositionLocalProvider(LocalCores provides cores) {
+        MaterialTheme(
+            colorScheme = esquema,
+            typography = Tipografia,
+            content = content
+        )
+    }
 }

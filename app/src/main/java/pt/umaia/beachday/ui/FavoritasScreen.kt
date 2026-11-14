@@ -1,12 +1,11 @@
 package pt.umaia.beachday.ui
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.ListItem
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -14,6 +13,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import pt.umaia.beachday.data.NOME_PERFIL_PREDEFINIDO
+import pt.umaia.beachday.ui.theme.BeachDay
+import pt.umaia.beachday.ui.theme.CorEstrela
 
 @Composable
 fun FavoritasScreen(
@@ -23,37 +25,41 @@ fun FavoritasScreen(
 ) {
     val favoritas by viewModel.favoritas.collectAsState()
     val dia by viewModel.dia.collectAsState()
+    val perfil by viewModel.perfil.collectAsState()
+    val cores = BeachDay.cores
 
-    Column(modifier.fillMaxSize()) {
-        Text(
-            text = "As tuas favoritas para ${viewModel.nomeDia(dia)}",
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(16.dp)
-        )
-
-        if (favoritas.isEmpty()) {
+    EcraBeachDay(
+        modifier = modifier,
+        cabecalho = {
+            Text("Favoritas", style = MaterialTheme.typography.headlineMedium)
             Text(
-                text = "Ainda não tens favoritas. Abre uma praia para adicionar.",
-                modifier = Modifier.padding(16.dp)
+                text = "Notas para ${viewModel.nomeDia(dia)} · perfil ${perfil?.nome ?: NOME_PERFIL_PREDEFINIDO}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = cores.topoTextoSecundario
             )
-        } else {
-            LazyColumn {
-                items(favoritas, key = { it.praia.id }) { item ->
-                    ListItem(
-                        headlineContent = { Text(item.praia.nome) },
-                        supportingContent = {
-                            val aviso = if (item.avisoGrave) " · ⚠ Aviso" else ""
-                            Text("${item.praia.regiao} · ${item.praia.tipo}$aviso")
-                        },
-                        trailingContent = {
-                            Text(
-                                text = item.nota?.let { "$it/10" } ?: "—",
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                        },
-                        modifier = Modifier.clickable { onAbrirPraia(item.praia.id) }
+        }
+    ) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingFolha,
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            if (favoritas.isEmpty()) {
+                item {
+                    Aviso(
+                        icone = Icons.Outlined.StarBorder,
+                        cor = CorEstrela,
+                        texto = "Ainda não tens favoritas. Abre uma praia e toca na estrela."
                     )
                 }
+            }
+
+            itemsIndexed(favoritas, key = { _, item -> item.praia.id }) { indice, item ->
+                CartaoRanking(
+                    posicao = indice + 1,
+                    item = item,
+                    onClick = { onAbrirPraia(item.praia.id) }
+                )
             }
         }
     }
