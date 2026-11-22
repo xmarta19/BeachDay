@@ -66,4 +66,9 @@ dependencies {
     implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.osmdroid.android)
     implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
 }

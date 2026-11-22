@@ -63,6 +63,7 @@ private val nomesTipos = listOf("Mar", "Fluviais", "Todas")
 fun ListaPraiasScreen(
     onAbrirPraia: (Int) -> Unit,
     onMudarDia: () -> Unit,
+    onAbrirConta: () -> Unit,
     viewModel: PraiasViewModel,
     modifier: Modifier = Modifier
 ) {
@@ -98,10 +99,14 @@ fun ListaPraiasScreen(
         cabecalho = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 BotaoRedondo(Icons.AutoMirrored.Outlined.ArrowBack, "Mudar dia", onMudarDia)
-                Column(Modifier.weight(1f)) {
+                Column(
+                    Modifier
+                        .weight(1f)
+                        .padding(start = 4.dp)
+                ) {
                     Text(
                         text = "${viewModel.nomeDia(dia).maiuscula()} · ${dataCurta(dia)}",
                         style = MaterialTheme.typography.bodyMedium,
@@ -115,6 +120,7 @@ fun ListaPraiasScreen(
                     acabouDeAtualizar = botaoBloqueado,
                     onClick = { viewModel.atualizar() }
                 )
+                AvatarConta(onClick = onAbrirConta)
             }
 
             CampoPesquisa(

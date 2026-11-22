@@ -20,4 +20,7 @@ interface PerfilDao {
 
     @Delete
     suspend fun apagar(perfil: PerfilUtilizador)
+
+    @Query("DELETE FROM PerfilUtilizador")
+    suspend fun apagarTodos()
 }

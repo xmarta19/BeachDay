@@ -47,6 +47,7 @@ import pt.umaia.beachday.ui.theme.textoNota
 fun DiasScreen(
     onEscolherDia: () -> Unit,
     onAbrirPerfil: () -> Unit,
+    onAbrirConta: () -> Unit,
     viewModel: PraiasViewModel,
     modifier: Modifier = Modifier
 ) {
@@ -89,12 +90,15 @@ fun DiasScreen(
                         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                     )
                 }
-                BotaoAtualizar(
-                    aAtualizar = aAtualizar,
-                    ativo = temRede && !botaoBloqueado,
-                    acabouDeAtualizar = botaoBloqueado,
-                    onClick = { viewModel.atualizar() }
-                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    BotaoAtualizar(
+                        aAtualizar = aAtualizar,
+                        ativo = temRede && !botaoBloqueado,
+                        acabouDeAtualizar = botaoBloqueado,
+                        onClick = { viewModel.atualizar() }
+                    )
+                    AvatarConta(onClick = onAbrirConta)
+                }
             }
 
             Text(

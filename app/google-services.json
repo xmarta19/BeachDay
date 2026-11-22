@@ -12,7 +12,20 @@
           "package_name": "pt.umaia.beachday"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "871033498232-dgbkpgidh2o0i8r1olreoc7mcgp193ul.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "pt.umaia.beachday",
+            "certificate_hash": "dc0f162e4872eefb3c80cdabdbebbd3abeb8a649"
+          }
+        },
+        {
+          "client_id": "871033498232-rlip0llc9mfqfpldgt03eel67n1plr5r.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyB5VHQACgeZQwrHqRTTRZoikysM8y31wAw"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "871033498232-rlip0llc9mfqfpldgt03eel67n1plr5r.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

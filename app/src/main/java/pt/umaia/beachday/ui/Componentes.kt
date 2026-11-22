@@ -29,6 +29,7 @@ import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.outlined.WarningAmber
@@ -61,6 +62,16 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import pt.umaia.beachday.data.PraiaRanking
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import coil3.compose.AsyncImage
+import pt.umaia.beachday.data.GestorContas
+import com.google.firebase.auth.GoogleAuthProvider
+import pt.umaia.beachday.data.utilizadorAtual
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import pt.umaia.beachday.ui.theme.BeachDay
 import pt.umaia.beachday.ui.theme.EstiloNumero
 import pt.umaia.beachday.ui.theme.coresNota
@@ -166,6 +177,104 @@ fun BotaoAtualizar(
             onClick = onClick,
             ativo = ativo
         )
+    }
+}
+
+/** Círculo com a foto da pessoa ou, se não houver foto, a inicial. */
+@Composable
+fun AvatarPessoa(
+    foto: String?,
+    texto: String?,
+    modifier: Modifier = Modifier,
+    tamanho: Dp = 42.dp
+) {
+    // Primeira letra ou número (ignora espaços e símbolos)
+    val inicial = texto?.firstOrNull { it.isLetterOrDigit() }?.uppercaseChar()?.toString() ?: "?"
+
+    Box(
+        modifier = modifier
+            .size(tamanho)
+            .clip(CircleShape)
+            .background(BeachDay.cores.destaque),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = inicial,
+            style = EstiloNumero.copy(fontSize = (tamanho.value * 0.42f).sp),
+            color = Color.White
+        )
+        if (foto != null) {
+            AsyncImage(
+                model = foto,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+    }
+}
+
+/**
+ * Foto da conta no canto do topo. Toca para abrir o painel de contas.
+ * Google: foto da conta. Email: inicial. Convidado: ícone de pessoa.
+ */
+@Composable
+fun AvatarConta(
+    onClick: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+    tamanho: Dp = 42.dp
+) {
+    val utilizador by remember { utilizadorAtual() }
+        .collectAsState(initial = GestorContas.authAtiva?.currentUser)
+    val cores = BeachDay.cores
+
+    val foto = utilizador?.let { conta ->
+        (conta.providerData.firstOrNull { it.providerId == GoogleAuthProvider.PROVIDER_ID }?.photoUrl
+            ?: conta.photoUrl)?.toString()
+    }
+    val descricao = utilizador?.email?.let { "Contas. Sessão iniciada como $it" } ?: "Contas. Iniciar sessão"
+
+    val base = modifier
+        .size(tamanho)
+        .clip(CircleShape)
+        .border(2.dp, Color.White.copy(alpha = 0.18f), CircleShape)
+        .semantics { contentDescription = descricao }
+    val comToque = if (onClick != null) base.clickable(role = Role.Button, onClick = onClick) else base
+
+    val conta = utilizador
+    if (conta == null) {
+        Box(
+            modifier = comToque.background(cores.topoChip),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                Icons.Outlined.Person,
+                contentDescription = null,
+                tint = cores.topoTexto,
+                modifier = Modifier.size(tamanho * 0.48f)
+            )
+        }
+    } else {
+        AvatarPessoa(foto = foto, texto = conta.displayName?.takeIf { it.isNotBlank() } ?: conta.email, modifier = comToque, tamanho = tamanho)
+    }
+}
+
+/** Topo simples: título, subtítulo e a foto da conta à direita. */
+@Composable
+fun CabecalhoTitulo(titulo: String, subtitulo: String, onAbrirConta: () -> Unit) {
+    Row(verticalAlignment = Alignment.Top) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Text(titulo, style = MaterialTheme.typography.headlineMedium)
+            Text(
+                text = subtitulo,
+                style = MaterialTheme.typography.bodyMedium,
+                color = BeachDay.cores.topoTextoSecundario
+            )
+        }
+        AvatarConta(onClick = onAbrirConta, modifier = Modifier.padding(start = 12.dp))
     }
 }
 
@@ -432,7 +541,7 @@ fun BotaoPrincipal(
             contentColor = Color.White
         ),
         contentPadding = PaddingValues(horizontal = 16.dp),
-        modifier = modifier.height(52.dp)
+        modifier = modifier.height(48.dp)
     ) {
         if (icone != null) {
             Icon(icone, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -469,7 +578,7 @@ fun BotaoSecundario(
             containerColor = cores.cartao,
             contentColor = cores.texto
         ),
-        modifier = modifier.height(52.dp)
+        modifier = modifier.height(48.dp)
     ) {
         Text(texto, style = MaterialTheme.typography.labelLarge)
     }
@@ -486,8 +595,8 @@ private val separadores = listOf(
     Separador("dias", "Praias", Icons.Outlined.Home, setOf("dias", "praias", "praia/{id}")),
     Separador("favoritas", "Favoritas", Icons.Outlined.StarBorder, setOf("favoritas")),
     Separador("historico", "Histórico", Icons.Outlined.History, setOf("historico")),
-    Separador("perfil", "Perfil", Icons.Outlined.Tune, setOf("perfil")),
-    Separador("conta", "Conta", Icons.Outlined.Person, setOf("conta"))
+    Separador("perfil", "Perfis", Icons.Outlined.Tune, setOf("perfil")),
+    Separador("definicoes", "Definições", Icons.Outlined.Settings, setOf("definicoes"))
 )
 
 @Composable
@@ -505,7 +614,7 @@ fun NavegacaoInferior(rotaAtual: String?, onAbrir: (String) -> Unit) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(68.dp)
+                .height(58.dp)
                 .clip(forma)
                 .background(cores.cartao)
                 .border(1.dp, cores.linha, forma)
@@ -528,26 +637,19 @@ fun NavegacaoInferior(rotaAtual: String?, onAbrir: (String) -> Unit) {
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(width = 48.dp, height = 26.dp)
-                            .clip(RoundedCornerShape(13.dp))
+                            .size(width = 52.dp, height = 34.dp)
+                            .clip(RoundedCornerShape(17.dp))
                             .background(if (ativo) cores.destaque else Color.Transparent),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = separador.icone,
-                            contentDescription = null,
+                            // Sem legenda visível: o nome fica para o leitor de ecrã
+                            contentDescription = separador.nome,
                             tint = if (ativo) Color.White else cores.textoSecundario,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(22.dp)
                         )
                     }
-                    Spacer(Modifier.height(3.dp))
-                    Text(
-                        text = separador.nome,
-                        fontSize = 11.sp,
-                        fontWeight = if (ativo) FontWeight.SemiBold else FontWeight.Medium,
-                        color = if (ativo) cores.texto else cores.textoSecundario,
-                        maxLines = 1
-                    )
                 }
             }
         }

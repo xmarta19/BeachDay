@@ -61,12 +61,12 @@ private val etiquetasPredefinido = listOf(
 
 @Composable
 fun PerfilScreen(
+    onAbrirConta: () -> Unit,
     viewModel: PraiasViewModel,
     modifier: Modifier = Modifier
 ) {
     val perfis by viewModel.perfis.collectAsState()
     val idPerfil by viewModel.idPerfil.collectAsState()
-    val cores = BeachDay.cores
 
     var aEditar by remember { mutableStateOf<PerfilUtilizador?>(null) }
     var aApagar by remember { mutableStateOf<PerfilUtilizador?>(null) }
@@ -88,11 +88,10 @@ fun PerfilScreen(
     EcraBeachDay(
         modifier = modifier,
         cabecalho = {
-            Text("Perfil", style = MaterialTheme.typography.headlineMedium)
-            Text(
-                text = "O que vais fazer à praia? O perfil escolhido decide como a nota é calculada.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = cores.topoTextoSecundario
+            CabecalhoTitulo(
+                titulo = "Perfis",
+                subtitulo = "O que vais fazer à praia? O perfil escolhido decide como a nota é calculada.",
+                onAbrirConta = onAbrirConta
             )
         }
     ) {

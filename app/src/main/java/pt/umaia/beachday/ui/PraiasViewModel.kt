@@ -2,6 +2,7 @@ package pt.umaia.beachday.ui
 
 import android.app.Application
 import android.content.Context
+import android.content.SharedPreferences
 import android.util.Log
 import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
@@ -63,6 +64,21 @@ class PraiasViewModel(application: Application) : AndroidViewModel(application) 
     val tipo = MutableStateFlow("Costeiras")
     val dia = MutableStateFlow(dias.first())
     val idPerfil = MutableStateFlow(preferencias.getInt("idPerfil", 0))
+
+    // Quando se muda de conta, o perfil escolhido volta a "Apanhar sol":
+    // ouvir a preferência evita ficar com o id de um perfil da conta anterior
+    private val ouvintePreferencias =
+        SharedPreferences.OnSharedPreferenceChangeListener { _, chave ->
+            if (chave == "idPerfil") idPerfil.value = preferencias.getInt("idPerfil", 0)
+        }
+
+    init {
+        preferencias.registerOnSharedPreferenceChangeListener(ouvintePreferencias)
+    }
+
+    override fun onCleared() {
+        preferencias.unregisterOnSharedPreferenceChangeListener(ouvintePreferencias)
+    }
 
     val perfis = perfilDao.todos()
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())

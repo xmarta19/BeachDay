@@ -90,6 +90,12 @@ interface PraiaDao {
     @Query("DELETE FROM Visita WHERE id = :id")
     suspend fun apagarVisita(id: Int)
 
+    @Query("UPDATE Praia SET favorita = 0")
+    suspend fun limparFavoritas()
+
+    @Query("DELETE FROM Visita")
+    suspend fun apagarVisitas()
+
     @Query("""
         SELECT Visita.id, Visita.data, Visita.nota, Visita.comentario,
                Praia.nome AS nomePraia

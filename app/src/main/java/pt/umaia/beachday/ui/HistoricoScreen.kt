@@ -36,6 +36,7 @@ import java.util.Locale
 
 @Composable
 fun HistoricoScreen(
+    onAbrirConta: () -> Unit,
     viewModel: PraiasViewModel,
     modifier: Modifier = Modifier
 ) {
@@ -46,15 +47,14 @@ fun HistoricoScreen(
     EcraBeachDay(
         modifier = modifier,
         cabecalho = {
-            Text("Histórico", style = MaterialTheme.typography.headlineMedium)
-            Text(
-                text = when (visitas.size) {
+            CabecalhoTitulo(
+                titulo = "Histórico",
+                subtitulo = when (visitas.size) {
                     0 -> "As praias onde já foste"
                     1 -> "1 visita registada"
                     else -> "${visitas.size} visitas registadas"
                 },
-                style = MaterialTheme.typography.bodyMedium,
-                color = cores.topoTextoSecundario
+                onAbrirConta = onAbrirConta
             )
         }
     ) {

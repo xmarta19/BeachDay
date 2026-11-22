@@ -95,6 +95,7 @@ fun DetalhePraiaScreen(
     idPraia: Int,
     viewModel: PraiasViewModel,
     onVoltar: () -> Unit,
+    onAbrirConta: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val praia by remember(idPraia) { viewModel.praia(idPraia) }
@@ -111,7 +112,7 @@ fun DetalhePraiaScreen(
             }
         }
     } else {
-        DetalhePraia(atual, viewModel, onVoltar, modifier)
+        DetalhePraia(atual, viewModel, onVoltar, onAbrirConta, modifier)
     }
 }
 
@@ -120,6 +121,7 @@ private fun DetalhePraia(
     praia: Praia,
     viewModel: PraiasViewModel,
     onVoltar: () -> Unit,
+    onAbrirConta: () -> Unit,
     modifier: Modifier
 ) {
     val avisos by viewModel.avisos.collectAsState()
@@ -163,6 +165,7 @@ private fun DetalhePraia(
                         onClick = { viewModel.definirFavorita(praia.id, !praia.favorita) },
                         cor = if (praia.favorita) CorEstrela else LocalContentColor.current
                     )
+                    AvatarConta(onClick = onAbrirConta)
                 }
             }
 
