@@ -1,6 +1,7 @@
 package pt.umaia.beachday.ui
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,7 +21,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.PersonAdd
-import androidx.compose.material.icons.outlined.WbSunny
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -36,12 +36,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import pt.umaia.beachday.R
 import pt.umaia.beachday.ui.theme.BeachDay
 
 /**
@@ -100,14 +102,13 @@ fun BoasVindasScreen(
                 modifier = Modifier
                     .size(72.dp)
                     .clip(RoundedCornerShape(22.dp))
-                    .background(cores.destaque),
+                    .background(cores.topoChip),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    Icons.Outlined.WbSunny,
+                Image(
+                    painter = painterResource(R.drawable.logo_beachday),
                     contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(38.dp)
+                    modifier = Modifier.size(56.dp)
                 )
             }
 

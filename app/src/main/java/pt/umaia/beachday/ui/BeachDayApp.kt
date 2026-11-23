@@ -46,7 +46,7 @@ private fun indiceSeparador(rota: String?): Int = when (rota) {
 }
 
 // Só se desliza entre separadores nestes ecrãs (no detalhe o mapa usa o gesto)
-private val rotasComDeslizar = setOf("dias", "praias", "favoritas", "historico", "perfil", "conta")
+private val rotasComDeslizar = setOf("dias", "praias", "favoritas", "historico", "perfil", "definicoes")
 
 @Composable
 fun BeachDayApp() {

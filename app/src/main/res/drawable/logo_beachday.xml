@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Logótipo da BeachDay (o mesmo desenho do ícone, sem o fundo), para usar dentro da app -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="56dp"
+    android:height="56dp"
+    android:viewportWidth="56"
+    android:viewportHeight="56">
+
+    <group
+        android:translateX="-26.25"
+        android:translateY="-23.2">
+
+        <path
+            android:pathData="M54,30 L54,35 M37.5,36.5 L41,40 M70.5,36.5 L67,40 M30,52 L35,52 M78,52 L73,52"
+            android:strokeColor="#E2636D"
+            android:strokeWidth="3.2"
+            android:strokeLineCap="round" />
+
+        <path
+            android:fillColor="#E2636D"
+            android:pathData="M39,57 A15,15 0 0,1 69,57 Z" />
+
+        <path
+            android:pathData="M31,62.5 q5.75,-4.5 11.5,0 t11.5,0 t11.5,0 t11.5,0"
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="4.2"
+            android:strokeLineCap="round" />
+
+        <path
+            android:pathData="M35,71.5 q4.75,-4 9.5,0 t9.5,0 t9.5,0 t9.5,0"
+            android:strokeColor="#43B892"
+            android:strokeWidth="4.2"
+            android:strokeLineCap="round" />
+    </group>
+</vector>
