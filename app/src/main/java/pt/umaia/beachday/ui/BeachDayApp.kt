@@ -12,9 +12,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -24,7 +24,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
-import kotlinx.coroutines.launch
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -32,7 +31,21 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import pt.umaia.beachday.data.GestorContas
+import kotlinx.coroutines.launch
+import pt.umaia.beachday.data.conta.GestorContas
+import pt.umaia.beachday.ui.comum.NavegacaoInferior
+import pt.umaia.beachday.ui.conta.BoasVindasScreen
+import pt.umaia.beachday.ui.conta.ContaViewModel
+import pt.umaia.beachday.ui.conta.FolhaConta
+import pt.umaia.beachday.ui.conta.PainelContas
+import pt.umaia.beachday.ui.definicoes.DefinicoesScreen
+import pt.umaia.beachday.ui.favoritas.FavoritasScreen
+import pt.umaia.beachday.ui.historico.HistoricoScreen
+import pt.umaia.beachday.ui.perfis.PerfilScreen
+import pt.umaia.beachday.ui.praias.DetalhePraiaScreen
+import pt.umaia.beachday.ui.praias.DiasScreen
+import pt.umaia.beachday.ui.praias.ListaPraiasScreen
+import pt.umaia.beachday.ui.praias.PraiasViewModel
 import pt.umaia.beachday.ui.theme.BeachDay
 
 private const val ROTA_BOAS_VINDAS = "boasvindas"

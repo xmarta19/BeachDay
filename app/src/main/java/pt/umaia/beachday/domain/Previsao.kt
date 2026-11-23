@@ -1,6 +1,9 @@
-package pt.umaia.beachday.data
+package pt.umaia.beachday.domain
 
 import java.util.Locale
+import pt.umaia.beachday.data.local.PerfilUtilizador
+import pt.umaia.beachday.data.local.Praia
+import pt.umaia.beachday.data.remote.AvisoIpma
 
 const val NOME_PERFIL_PREDEFINIDO = "Apanhar sol"
 

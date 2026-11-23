@@ -1,11 +1,8 @@
-package pt.umaia.beachday.ui
+package pt.umaia.beachday.ui.conta
 
 import androidx.compose.foundation.Image
-import androidx.compose.material.icons.outlined.ExpandMore
-import androidx.compose.material.icons.outlined.ExpandLess
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.border
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -25,6 +23,8 @@ import androidx.compose.material.icons.automirrored.outlined.Login
 import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.DeleteOutline
+import androidx.compose.material.icons.outlined.ExpandLess
+import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.MarkEmailUnread
 import androidx.compose.material.icons.outlined.Person
@@ -57,6 +57,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import pt.umaia.beachday.R
+import pt.umaia.beachday.ui.comum.AvatarPessoa
+import pt.umaia.beachday.ui.comum.Aviso
+import pt.umaia.beachday.ui.comum.Cartao
+import pt.umaia.beachday.ui.comum.Etiqueta
 import pt.umaia.beachday.ui.theme.BeachDay
 
 /**

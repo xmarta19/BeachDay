@@ -1,4 +1,4 @@
-package pt.umaia.beachday.data
+package pt.umaia.beachday.data.local
 
 import android.content.Context
 import androidx.core.content.edit

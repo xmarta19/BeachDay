@@ -3,12 +3,28 @@ package pt.umaia.beachday.data
 import android.content.Context
 import android.location.Location
 import com.google.gson.Gson
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.withContext
+import pt.umaia.beachday.data.local.CacheMar
+import pt.umaia.beachday.data.local.CacheTempo
+import pt.umaia.beachday.data.local.PerfilUtilizador
+import pt.umaia.beachday.data.local.Praia
+import pt.umaia.beachday.data.local.PraiaDao
+import pt.umaia.beachday.data.local.Visita
+import pt.umaia.beachday.data.remote.AvisoIpma
+import pt.umaia.beachday.data.remote.IpmaApi
+import pt.umaia.beachday.data.remote.LocalIpma
+import pt.umaia.beachday.domain.DiaPrevisao
+import pt.umaia.beachday.domain.PraiaRanking
+import pt.umaia.beachday.domain.avaliar
+import pt.umaia.beachday.domain.calcularNota
+import pt.umaia.beachday.domain.orientacaoPraia
+import pt.umaia.beachday.domain.perfilPrecisaDeMar
+import pt.umaia.beachday.domain.relacaoVento
 
 private const val VALIDADE_DADOS = 30 * 60 * 1000L
 

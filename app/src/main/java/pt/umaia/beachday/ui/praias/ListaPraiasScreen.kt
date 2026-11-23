@@ -1,4 +1,4 @@
-package pt.umaia.beachday.ui
+package pt.umaia.beachday.ui.praias
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -42,12 +41,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import pt.umaia.beachday.data.NOME_PERFIL_PREDEFINIDO
-import pt.umaia.beachday.data.perfilPrecisaDeMar
+import pt.umaia.beachday.domain.NOME_PERFIL_PREDEFINIDO
+import pt.umaia.beachday.domain.perfilPrecisaDeMar
+import pt.umaia.beachday.ui.comum.AvatarConta
+import pt.umaia.beachday.ui.comum.Aviso
+import pt.umaia.beachday.ui.comum.BotaoAtualizar
+import pt.umaia.beachday.ui.comum.BotaoPrincipal
+import pt.umaia.beachday.ui.comum.BotaoRedondo
+import pt.umaia.beachday.ui.comum.Cartao
+import pt.umaia.beachday.ui.comum.CartaoRanking
+import pt.umaia.beachday.ui.comum.EcraBeachDay
+import pt.umaia.beachday.ui.comum.PaddingFolha
+import pt.umaia.beachday.ui.comum.Segmentado
+import pt.umaia.beachday.ui.comum.dataCurta
+import pt.umaia.beachday.ui.comum.maiuscula
+import pt.umaia.beachday.ui.comum.textoAtualizacao
 import pt.umaia.beachday.ui.theme.BeachDay
 
 private val regioes = listOf(
@@ -305,23 +316,6 @@ private fun SeletorRegiao(regiao: String?, onEscolher: (String?) -> Unit) {
                     }
                 )
             }
-        }
-    }
-}
-
-@Composable
-fun Aviso(icone: ImageVector, cor: Color, texto: String) {
-    Cartao(preenchimento = PaddingValues(14.dp)) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Icon(icone, contentDescription = null, tint = cor, modifier = Modifier.size(20.dp))
-            Text(
-                text = texto,
-                style = MaterialTheme.typography.bodyMedium,
-                color = BeachDay.cores.texto
-            )
         }
     }
 }

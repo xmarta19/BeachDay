@@ -1,4 +1,4 @@
-package pt.umaia.beachday.data
+package pt.umaia.beachday.data.conta
 
 import android.content.Context
 import android.util.Log
@@ -12,11 +12,14 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeout
-import kotlin.time.Duration.Companion.seconds
+import pt.umaia.beachday.data.local.AppDatabase
+import pt.umaia.beachday.data.local.PerfilUtilizador
+import pt.umaia.beachday.data.local.Visita
 
 class Sincronizacao(context: Context) {
     private val baseDados = AppDatabase.obter(context)

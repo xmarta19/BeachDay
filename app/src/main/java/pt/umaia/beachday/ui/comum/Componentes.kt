@@ -1,4 +1,4 @@
-package pt.umaia.beachday.ui
+package pt.umaia.beachday.ui.comum
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -43,6 +43,9 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,30 +58,27 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import pt.umaia.beachday.data.PraiaRanking
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import coil3.compose.AsyncImage
-import pt.umaia.beachday.data.GestorContas
 import com.google.firebase.auth.GoogleAuthProvider
-import pt.umaia.beachday.data.utilizadorAtual
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import pt.umaia.beachday.data.conta.GestorContas
+import pt.umaia.beachday.data.conta.utilizadorAtual
+import pt.umaia.beachday.domain.PraiaRanking
 import pt.umaia.beachday.ui.theme.BeachDay
 import pt.umaia.beachday.ui.theme.EstiloNumero
 import pt.umaia.beachday.ui.theme.coresNota
 import pt.umaia.beachday.ui.theme.pincelNota
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 val PaddingFolha = PaddingValues(start = 20.dp, top = 24.dp, end = 20.dp, bottom = 24.dp)
 
@@ -686,3 +686,20 @@ fun String.maiuscula(): String = replaceFirstChar { it.titlecase(Portugues) }
 fun numero(valor: Double): String =
     if (valor % 1.0 == 0.0) valor.toInt().toString()
     else String.format(Portugues, "%.1f", valor)
+
+@Composable
+fun Aviso(icone: ImageVector, cor: Color, texto: String) {
+    Cartao(preenchimento = PaddingValues(14.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(icone, contentDescription = null, tint = cor, modifier = Modifier.size(20.dp))
+            Text(
+                text = texto,
+                style = MaterialTheme.typography.bodyMedium,
+                color = BeachDay.cores.texto
+            )
+        }
+    }
+}

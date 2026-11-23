@@ -1,4 +1,4 @@
-package pt.umaia.beachday.ui
+package pt.umaia.beachday.ui.praias
 
 import android.content.ActivityNotFoundException
 import android.content.Context
@@ -64,20 +64,34 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
+import java.io.File
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
-import pt.umaia.beachday.data.AvisoIpma
-import pt.umaia.beachday.data.Condicao
-import pt.umaia.beachday.data.DiaPrevisao
-import pt.umaia.beachday.data.NOME_PERFIL_PREDEFINIDO
-import pt.umaia.beachday.data.Praia
-import pt.umaia.beachday.data.avisoAtivoEm
-import pt.umaia.beachday.data.descricaoVento
-import pt.umaia.beachday.data.perfilPrecisaDeMar
+import pt.umaia.beachday.data.local.Praia
+import pt.umaia.beachday.data.remote.AvisoIpma
+import pt.umaia.beachday.domain.Condicao
+import pt.umaia.beachday.domain.DiaPrevisao
+import pt.umaia.beachday.domain.NOME_PERFIL_PREDEFINIDO
+import pt.umaia.beachday.domain.avisoAtivoEm
+import pt.umaia.beachday.domain.descricaoVento
+import pt.umaia.beachday.domain.perfilPrecisaDeMar
+import pt.umaia.beachday.ui.comum.AnelNota
+import pt.umaia.beachday.ui.comum.AvatarConta
+import pt.umaia.beachday.ui.comum.Aviso
+import pt.umaia.beachday.ui.comum.BotaoPrincipal
+import pt.umaia.beachday.ui.comum.BotaoRedondo
+import pt.umaia.beachday.ui.comum.Cartao
+import pt.umaia.beachday.ui.comum.EcraBeachDay
+import pt.umaia.beachday.ui.comum.Etiqueta
+import pt.umaia.beachday.ui.comum.PaddingFolha
+import pt.umaia.beachday.ui.comum.Segmentado
+import pt.umaia.beachday.ui.comum.diaSemanaCurto
+import pt.umaia.beachday.ui.comum.maiuscula
+import pt.umaia.beachday.ui.comum.numero
 import pt.umaia.beachday.ui.theme.BeachDay
 import pt.umaia.beachday.ui.theme.CorAgua
 import pt.umaia.beachday.ui.theme.CorChuva
@@ -88,7 +102,6 @@ import pt.umaia.beachday.ui.theme.CorVento
 import pt.umaia.beachday.ui.theme.EstiloNumero
 import pt.umaia.beachday.ui.theme.coresNota
 import pt.umaia.beachday.ui.theme.textoNota
-import java.io.File
 
 @Composable
 fun DetalhePraiaScreen(

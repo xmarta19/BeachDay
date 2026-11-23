@@ -1,4 +1,4 @@
-package pt.umaia.beachday.ui
+package pt.umaia.beachday.ui.conta
 
 import android.app.Application
 import android.content.Context
@@ -20,10 +20,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
-import pt.umaia.beachday.data.Sincronizacao
-import pt.umaia.beachday.data.guardarPassword
-import pt.umaia.beachday.data.limparContaGoogle
-import pt.umaia.beachday.data.pedirContaGoogle
+import pt.umaia.beachday.data.conta.Sincronizacao
+import pt.umaia.beachday.data.conta.guardarPassword
+import pt.umaia.beachday.data.conta.limparContaGoogle
+import pt.umaia.beachday.data.conta.pedirContaGoogle
 
 data class EstadoConta(
     val email: String? = null,

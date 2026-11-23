@@ -1,4 +1,4 @@
-package pt.umaia.beachday.ui
+package pt.umaia.beachday.ui.praias
 
 import android.app.Application
 import android.content.Context
@@ -8,6 +8,11 @@ import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.JsonParseException
+import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,21 +21,16 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import pt.umaia.beachday.data.AppDatabase
-import pt.umaia.beachday.data.AvisoIpma
-import pt.umaia.beachday.data.IpmaApi
-import pt.umaia.beachday.data.PerfilUtilizador
-import pt.umaia.beachday.data.Praia
 import pt.umaia.beachday.data.PraiaRepository
-import pt.umaia.beachday.data.Sincronizacao
+import pt.umaia.beachday.data.conta.Sincronizacao
 import pt.umaia.beachday.data.estadoRede
-import pt.umaia.beachday.data.marcarAvisos
+import pt.umaia.beachday.data.local.AppDatabase
+import pt.umaia.beachday.data.local.PerfilUtilizador
+import pt.umaia.beachday.data.local.Praia
+import pt.umaia.beachday.data.remote.AvisoIpma
+import pt.umaia.beachday.data.remote.IpmaApi
+import pt.umaia.beachday.domain.marcarAvisos
 import retrofit2.HttpException
-import java.io.IOException
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
-import kotlin.time.Duration.Companion.seconds
 
 private data class Pedido(
     val pesquisa: String,

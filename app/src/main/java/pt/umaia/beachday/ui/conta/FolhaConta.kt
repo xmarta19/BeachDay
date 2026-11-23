@@ -1,4 +1,4 @@
-package pt.umaia.beachday.ui
+package pt.umaia.beachday.ui.conta
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -43,6 +43,9 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import pt.umaia.beachday.ui.comum.AvatarPessoa
+import pt.umaia.beachday.ui.comum.Aviso
+import pt.umaia.beachday.ui.comum.BotaoPrincipal
 import pt.umaia.beachday.ui.theme.BeachDay
 
 /**

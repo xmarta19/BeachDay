@@ -1,4 +1,4 @@
-package pt.umaia.beachday.ui
+package pt.umaia.beachday.ui.favoritas
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,7 +11,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import pt.umaia.beachday.data.NOME_PERFIL_PREDEFINIDO
+import pt.umaia.beachday.domain.NOME_PERFIL_PREDEFINIDO
+import pt.umaia.beachday.ui.comum.Aviso
+import pt.umaia.beachday.ui.comum.CabecalhoTitulo
+import pt.umaia.beachday.ui.comum.CartaoRanking
+import pt.umaia.beachday.ui.comum.EcraBeachDay
+import pt.umaia.beachday.ui.comum.PaddingFolha
+import pt.umaia.beachday.ui.praias.PraiasViewModel
 import pt.umaia.beachday.ui.theme.CorEstrela
 
 @Composable

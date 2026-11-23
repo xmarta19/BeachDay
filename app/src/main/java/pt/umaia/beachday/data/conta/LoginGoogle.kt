@@ -1,4 +1,4 @@
-package pt.umaia.beachday.data
+package pt.umaia.beachday.data.conta
 
 import android.content.Context
 import android.util.Log

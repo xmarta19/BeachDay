@@ -1,4 +1,4 @@
-package pt.umaia.beachday.ui
+package pt.umaia.beachday.ui.perfis
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -47,13 +47,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import pt.umaia.beachday.data.NOME_PERFIL_PREDEFINIDO
-import pt.umaia.beachday.data.PerfilUtilizador
-import pt.umaia.beachday.data.descricaoVento
-import pt.umaia.beachday.ui.theme.BeachDay
-import pt.umaia.beachday.ui.theme.NotaBoa
 import java.util.Locale
 import kotlin.math.roundToInt
+import pt.umaia.beachday.data.local.PerfilUtilizador
+import pt.umaia.beachday.domain.NOME_PERFIL_PREDEFINIDO
+import pt.umaia.beachday.domain.descricaoVento
+import pt.umaia.beachday.ui.comum.BotaoPrincipal
+import pt.umaia.beachday.ui.comum.BotaoRedondo
+import pt.umaia.beachday.ui.comum.BotaoSecundario
+import pt.umaia.beachday.ui.comum.BotaoTracejado
+import pt.umaia.beachday.ui.comum.CabecalhoTitulo
+import pt.umaia.beachday.ui.comum.Cartao
+import pt.umaia.beachday.ui.comum.EcraBeachDay
+import pt.umaia.beachday.ui.comum.Etiqueta
+import pt.umaia.beachday.ui.comum.PaddingFolha
+import pt.umaia.beachday.ui.praias.PraiasViewModel
+import pt.umaia.beachday.ui.theme.BeachDay
+import pt.umaia.beachday.ui.theme.NotaBoa
 
 private val etiquetasPredefinido = listOf(
     "25 °C ou mais", "Chuva até 15%", "Vento até moderado", "Mar até 1,5 m", "Água 20 °C+"

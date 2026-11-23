@@ -7,9 +7,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import pt.umaia.beachday.data.GestorContas
-import pt.umaia.beachday.data.Preferencias
-import pt.umaia.beachday.data.Tema
+import pt.umaia.beachday.data.conta.GestorContas
+import pt.umaia.beachday.data.local.Preferencias
+import pt.umaia.beachday.data.local.Tema
 import pt.umaia.beachday.ui.BeachDayApp
 import pt.umaia.beachday.ui.theme.BeachDayTheme
 

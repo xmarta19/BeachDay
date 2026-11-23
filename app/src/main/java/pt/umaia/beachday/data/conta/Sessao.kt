@@ -1,4 +1,4 @@
-package pt.umaia.beachday.data
+package pt.umaia.beachday.data.conta
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser

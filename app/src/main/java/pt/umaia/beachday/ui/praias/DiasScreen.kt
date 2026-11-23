@@ -1,4 +1,4 @@
-package pt.umaia.beachday.ui
+package pt.umaia.beachday.ui.praias
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -38,8 +38,19 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import pt.umaia.beachday.R
-import pt.umaia.beachday.data.NOME_PERFIL_PREDEFINIDO
-import pt.umaia.beachday.data.PraiaRanking
+import pt.umaia.beachday.domain.NOME_PERFIL_PREDEFINIDO
+import pt.umaia.beachday.domain.PraiaRanking
+import pt.umaia.beachday.ui.comum.AvatarConta
+import pt.umaia.beachday.ui.comum.BotaoAtualizar
+import pt.umaia.beachday.ui.comum.EcraBeachDay
+import pt.umaia.beachday.ui.comum.NotaQuadrado
+import pt.umaia.beachday.ui.comum.PaddingFolha
+import pt.umaia.beachday.ui.comum.dataCurta
+import pt.umaia.beachday.ui.comum.diaDoMes
+import pt.umaia.beachday.ui.comum.diaSemanaCurto
+import pt.umaia.beachday.ui.comum.maiuscula
+import pt.umaia.beachday.ui.comum.mesCurto
+import pt.umaia.beachday.ui.comum.textoAtualizacao
 import pt.umaia.beachday.ui.theme.BeachDay
 import pt.umaia.beachday.ui.theme.EstiloNumero
 import pt.umaia.beachday.ui.theme.pincelNota

@@ -1,4 +1,4 @@
-package pt.umaia.beachday.data
+package pt.umaia.beachday.data.local
 
 import androidx.room.Dao
 import androidx.room.Delete

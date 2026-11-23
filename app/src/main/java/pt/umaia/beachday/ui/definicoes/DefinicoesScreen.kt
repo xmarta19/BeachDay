@@ -1,4 +1,4 @@
-package pt.umaia.beachday.ui
+package pt.umaia.beachday.ui.definicoes
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -40,8 +40,14 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import pt.umaia.beachday.data.Preferencias
-import pt.umaia.beachday.data.Tema
+import pt.umaia.beachday.data.local.Preferencias
+import pt.umaia.beachday.data.local.Tema
+import pt.umaia.beachday.ui.comum.AvatarConta
+import pt.umaia.beachday.ui.comum.CabecalhoTitulo
+import pt.umaia.beachday.ui.comum.Cartao
+import pt.umaia.beachday.ui.comum.EcraBeachDay
+import pt.umaia.beachday.ui.comum.PaddingFolha
+import pt.umaia.beachday.ui.conta.ContaViewModel
 import pt.umaia.beachday.ui.theme.BeachDay
 
 @Composable

@@ -1,4 +1,4 @@
-package pt.umaia.beachday.data
+package pt.umaia.beachday.data.conta
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -7,9 +7,9 @@ import androidx.core.content.edit
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
 import com.google.firebase.auth.FirebaseAuth
+import java.util.UUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import java.util.UUID
 
 /**
  * Várias contas com sessão iniciada ao mesmo tempo, como nas apps da Google.

@@ -1,4 +1,4 @@
-package pt.umaia.beachday.ui
+package pt.umaia.beachday.ui.historico
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -27,12 +27,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import pt.umaia.beachday.ui.theme.BeachDay
-import pt.umaia.beachday.ui.theme.CorEstrela
-import pt.umaia.beachday.ui.theme.EstiloNumero
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import pt.umaia.beachday.ui.comum.Aviso
+import pt.umaia.beachday.ui.comum.BotaoRedondo
+import pt.umaia.beachday.ui.comum.CabecalhoTitulo
+import pt.umaia.beachday.ui.comum.Cartao
+import pt.umaia.beachday.ui.comum.EcraBeachDay
+import pt.umaia.beachday.ui.comum.PaddingFolha
+import pt.umaia.beachday.ui.praias.PraiasViewModel
+import pt.umaia.beachday.ui.theme.BeachDay
+import pt.umaia.beachday.ui.theme.CorEstrela
+import pt.umaia.beachday.ui.theme.EstiloNumero
 
 @Composable
 fun HistoricoScreen(
